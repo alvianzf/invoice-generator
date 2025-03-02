@@ -45,17 +45,29 @@ const InvoicePreview = () => {
           <tr>
             <th className="border border-gray-300 px-4 py-2 text-left">Item</th>
             <th className="border border-gray-300 px-4 py-2 text-right">Qty</th>
-            <th className="border border-gray-300 px-4 py-2 text-right">Price</th>
-            <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
+            <th className="border border-gray-300 px-4 py-2 text-right">
+              Price
+            </th>
+            <th className="border border-gray-300 px-4 py-2 text-right">
+              Amount
+            </th>
           </tr>
         </thead>
         <tbody className="text-black">
           {invoiceData.items.map((item) => (
             <tr key={item.id} className="border-b border-gray-300">
-              <td className="border border-gray-300 px-4 py-2">{item.description}</td>
-              <td className="border border-gray-300 px-4 py-2 text-right">{item.quantity}</td>
-              <td className="border border-gray-300 px-4 py-2 text-right">{item.price}</td>
-              <td className="border border-gray-300 px-4 py-2 text-right">{item.amount}</td>
+              <td className="border border-gray-300 px-4 py-2">
+                {item.description}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-right">
+                {item.quantity}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-right">
+                {item.price}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-right">
+                {item.amount}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -65,10 +77,13 @@ const InvoicePreview = () => {
         <div className="text-right">
           <p className="text-lg font-bold">Total:</p>
           <p className="text-xl font-bold text-red-700">
-            {invoiceData.items.reduce((sum, item) => {
-              const amount = Number(item.amount.replace(/\D/g, ""));
-              return sum + (isNaN(amount) ? 0 : amount);
-            }, 0).toLocaleString("id-ID", { style: "currency", currency: "IDR" })}
+            {invoiceData.items
+              .reduce((sum, item) => {
+                const amount = Number(item.amount.replace(/\D/g, ""));
+                return sum + (isNaN(amount) ? 0 : amount);
+              }, 0)
+              .toLocaleString("id-ID", { style: "currency", currency: "IDR" })
+              .replace("Rp", "IDR")}
           </p>
         </div>
       </div>
