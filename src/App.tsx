@@ -11,7 +11,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 flex items-center gap-2">
           <FileText className="w-6 h-6 text-white" />
           <h1 className="text-2xl font-bold text-white">
-            Invoice Generator for Contractors/Freelancers
+            Invoice Generator
           </h1>
         </div>
       </header>
