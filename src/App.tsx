@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/Tabs';
 import InvoiceForm from './components/InvoiceForm';
+import InvoicePreview from './components/InvoicePreview'; 
 import { FileText, Eye } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<string>('form');
-  
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="bg-gray-900 shadow-sm py-4 mb-6">
@@ -16,23 +15,26 @@ function App() {
       
       <main className="max-w-7xl mx-auto px-4 pb-12">
         <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <div className="flex border-b border-gray-700">
-            <button
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium ${
-                activeTab === 'form' 
-                  ? 'text-blue-400 border-b-2 border-blue-400' 
-                  : 'text-gray-300 hover:text-gray-100'
-              }`}
-              onClick={() => setActiveTab('form')}
-            >
-              <FileText size={18} />
-              Create Invoice
-            </button>
-          </div>
-          
-          <div className="p-4">
-            <InvoiceForm />
-          </div>
+          {/* Use Tabs instead of manually managing state */}
+          <Tabs defaultValue="form">
+            <TabsList className="flex border-b border-gray-700">
+              <TabsTrigger value="form" className="flex items-center gap-2 px-6 py-3">
+                <FileText size={18} />
+                Create Invoice
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-2 px-6 py-3">
+                <Eye size={18} />
+                Preview
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="form" className="p-4">
+              <InvoiceForm />
+            </TabsContent>
+            <TabsContent value="preview" className="p-4">
+              <InvoicePreview /> 
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       
