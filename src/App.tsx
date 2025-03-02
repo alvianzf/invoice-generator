@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/Tabs";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, Github } from "lucide-react";
 
 function App() {
   return (
@@ -49,9 +49,13 @@ function App() {
 
       <footer className="bg-gray-900 border-t border-gray-800 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4">
-          <p className="text-center text-gray-400 text-sm">
-            Invoice Generator App © {new Date().getFullYear()}
-          </p>
+        <p className="text-center text-gray-400 text-sm">
+  Invoice Generator App © {new Date().getFullYear()} —  
+  <code> Alvian Zachry Faturrahman </code> |  
+  <a href="https://github.com/alvianzf/invoice-generator" target="_blank" rel="noopener noreferrer" className="underline text-gray-300 hover:text-white flex items-center justify-center gap-1">
+    <Github size={16} /> GitHub Repository
+  </a>
+</p>
         </div>
       </footer>
     </div>
