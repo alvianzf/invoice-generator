@@ -7,7 +7,7 @@ import { FileText, Eye, Github } from "lucide-react";
 function App() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="bg-gray-900 shadow-sm py-4 mb-6">
+      <header className="bg-gray-900 shadow-sm py-4 mb-6 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 flex items-center gap-2">
           <FileText className="w-6 h-6 text-white" />
           <h1 className="text-2xl font-bold text-white">Invoice Generator</h1>
