@@ -68,7 +68,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:gap-8">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:gap-8">
         <div className={view === "preview" ? "hidden lg:block" : ""}>
           <InvoiceForm invoice={invoice} setInvoice={setInvoice} onDownload={download} downloadState={downloadState} engineReady={!!engine} />
         </div>

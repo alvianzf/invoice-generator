@@ -144,6 +144,29 @@
     min-height: 2.9rem;
   }
 
+  /* Spreadsheet-style cell: quiet until hovered or focused. */
+  .cell-input {
+    @apply w-full rounded-lg px-2.5 py-2 text-sm text-ink placeholder:text-ink-mute/50;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.25s, background 0.2s;
+  }
+  .cell-input:hover {
+    border-color: rgba(28, 25, 23, 0.1);
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .cell-input:focus {
+    outline: none;
+    background: #fff;
+    border-color: rgba(139, 26, 36, 0.45);
+    box-shadow: 0 0 0 3px rgba(176, 44, 55, 0.12);
+  }
+  textarea.cell-input {
+    resize: none;
+    overflow: hidden;
+    min-height: 2.35rem;
+  }
+
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.18em] text-ruby-700;
   }

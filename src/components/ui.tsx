@@ -50,7 +50,7 @@ export function AutoTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>)
       document.fonts?.removeEventListener("loadingdone", fit);
     };
   }, []);
-  return <textarea ref={ref} rows={1} {...props} className={`field ${props.className ?? ""}`} />;
+  return <textarea ref={ref} rows={1} {...props} className={props.className || "field"} />;
 }
 
 export function TextareaField({ label, className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {

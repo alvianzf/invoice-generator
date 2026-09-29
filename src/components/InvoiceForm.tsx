@@ -109,32 +109,53 @@ export default function InvoiceForm({ invoice, setInvoice, onDownload, downloadS
       <SectionCard
         icon={<ListOrdered size={19} />}
         title="Line items"
-        hint="Amounts are quantity × unit price. Long descriptions wrap in the PDF."
+        hint="Amount = quantity × unit price. Long descriptions wrap in the PDF."
         delay={0.19}
       >
-        <ol className="space-y-3">
-          {invoice.items.map((item, i) => (
-            <ItemRow
-              key={item.id}
-              item={item}
-              index={i}
-              leaving={leaving.has(item.id)}
-              amount={item.quantity.trim() && item.price.trim() ? formatNumber(itemAmount(item), currency) : ""}
-              onChange={updateItem}
-              onRemove={removeItem}
-            />
-          ))}
-        </ol>
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
-          <button type="button" className="btn-glass" onClick={addItem}>
-            <Plus size={16} /> Add item
-          </button>
-          <div className="text-right">
-            <p className="field-label mb-0.5">Total due</p>
-            <p className="font-display text-4xl leading-none text-ruby-700 tabular-nums">
-              <AnimatedNumber value={invoiceTotal(invoice)} format={(n) => formatMoney(n, currency)} />
-            </p>
-          </div>
+        <div className="relative -mx-1 overflow-x-auto px-1 pb-1">
+          <table className="w-full min-w-[34rem] border-separate border-spacing-0 overflow-hidden rounded-2xl bg-white/55 text-left shadow-[inset_0_1px_0_#fff,0_8px_20px_-14px_rgba(28,25,23,.35)] ring-1 ring-black/[0.05]">
+            <thead>
+              <tr className="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ink-mute">
+                <th scope="col" className="w-9 border-b-2 border-ruby-700/70 py-3 pl-3 text-left">#</th>
+                <th scope="col" className="border-b-2 border-ruby-700/70 px-2.5 py-3">Description</th>
+                <th scope="col" className="w-[4.5rem] border-b-2 border-ruby-700/70 px-2.5 py-3 text-right">Qty</th>
+                <th scope="col" className="w-[7.5rem] border-b-2 border-ruby-700/70 px-2.5 py-3 text-right">Unit price</th>
+                <th scope="col" className="w-[8rem] border-b-2 border-ruby-700/70 px-2.5 py-3 text-right">Amount ({currency.code})</th>
+                <th scope="col" className="w-10 border-b-2 border-ruby-700/70 py-3 pr-2">
+                  <span className="sr-only">Remove</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item, i) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  index={i}
+                  leaving={leaving.has(item.id)}
+                  amount={item.quantity.trim() && item.price.trim() ? formatNumber(itemAmount(item), currency) : ""}
+                  onChange={updateItem}
+                  onRemove={removeItem}
+                />
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-ruby-50/70">
+                <td colSpan={2} className="py-3 pl-3">
+                  <button type="button" className="btn-glass py-1.5" onClick={addItem}>
+                    <Plus size={15} /> Add item
+                  </button>
+                </td>
+                <th scope="row" colSpan={2} className="px-2.5 py-3 text-right text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ruby-700">
+                  Total due
+                </th>
+                <td className="whitespace-nowrap px-2.5 py-3 text-right text-base font-semibold tabular-nums text-ruby-700">
+                  <AnimatedNumber value={invoiceTotal(invoice)} format={(n) => formatMoney(n, currency)} />
+                </td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </SectionCard>
 
@@ -215,56 +236,35 @@ function ItemRow({
   onChange: (id: string, field: keyof InvoiceItem, value: string) => void;
   onRemove: (id: string) => void;
 }) {
-  const id = useId();
+  const n = index + 1;
   return (
-    <li
-      className={`pop-in grid transition-all duration-300 ease-out ${leaving ? "pointer-events-none grid-rows-[0fr] opacity-0 -translate-x-3" : "grid-rows-[1fr]"}`}
+    <tr
+      className={`pop-in group align-top transition-all duration-300 ease-out hover:bg-white/70 [&>td]:border-b [&>td]:border-ink/[0.06] ${
+        leaving ? "pointer-events-none -translate-x-3 opacity-0" : ""
+      }`}
     >
-      <div className="overflow-hidden">
-        <div className="rounded-2xl border border-white/80 bg-white/55 p-3.5 shadow-[inset_0_1px_0_#fff,0_6px_16px_-12px_rgba(28,25,23,.3)] sm:p-4">
-          <div className="flex items-start gap-3">
-            <span className="mt-2.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ruby-50 text-[0.7rem] font-semibold text-ruby-700 ring-1 ring-ruby-100">
-              {index + 1}
-            </span>
-            <div className="min-w-0 flex-1 space-y-3">
-              <div>
-                <label htmlFor={`${id}-d`} className="sr-only">
-                  Description
-                </label>
-                <AutoTextarea
-                  id={`${id}-d`}
-                  value={item.description}
-                  onChange={(e) => onChange(item.id, "description", e.target.value)}
-                  placeholder="Description, e.g. Frontend development, September 2026"
-                />
-              </div>
-              <div className="grid grid-cols-[minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] gap-2.5">
-                <div>
-                  <label htmlFor={`${id}-q`} className="field-label">
-                    Qty
-                  </label>
-                  <input id={`${id}-q`} className="field" inputMode="decimal" value={item.quantity} placeholder="1" onChange={(e) => onChange(item.id, "quantity", e.target.value)} />
-                </div>
-                <div>
-                  <label htmlFor={`${id}-p`} className="field-label">
-                    Unit price
-                  </label>
-                  <input id={`${id}-p`} className="field" inputMode="decimal" value={item.price} placeholder="27.500.000" onChange={(e) => onChange(item.id, "price", e.target.value)} />
-                </div>
-                <div>
-                  <p className="field-label">Amount</p>
-                  <p className="truncate rounded-xl border border-dashed border-ink/10 px-3.5 py-2.5 text-right text-[0.95rem] font-semibold tabular-nums text-ink" title={amount}>
-                    {amount || <span className="font-normal text-ink-mute/60">—</span>}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <button type="button" className="icon-btn mt-1" onClick={() => onRemove(item.id)} aria-label={`Remove item ${index + 1}`} title="Remove item">
-              <Trash2 size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </li>
+      <td className="py-3.5 pl-3 text-xs font-semibold tabular-nums text-ink-mute">{n}</td>
+      <td className="px-1 py-1.5">
+        <AutoTextarea
+          aria-label={`Item ${n} description`}
+          className="cell-input"
+          value={item.description}
+          onChange={(e) => onChange(item.id, "description", e.target.value)}
+          placeholder="Frontend development, September 2026"
+        />
+      </td>
+      <td className="px-1 py-1.5">
+        <input aria-label={`Item ${n} quantity`} className="cell-input text-right tabular-nums" inputMode="decimal" value={item.quantity} placeholder="1" onChange={(e) => onChange(item.id, "quantity", e.target.value)} />
+      </td>
+      <td className="px-1 py-1.5">
+        <input aria-label={`Item ${n} unit price`} className="cell-input text-right tabular-nums" inputMode="decimal" value={item.price} placeholder="27.500.000" onChange={(e) => onChange(item.id, "price", e.target.value)} />
+      </td>
+      <td className="whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-semibold tabular-nums text-ink">{amount || <span className="font-normal text-ink-mute/50">—</span>}</td>
+      <td className="py-1.5 pr-2 text-right">
+        <button type="button" className="icon-btn opacity-60 transition group-hover:opacity-100 focus-visible:opacity-100" onClick={() => onRemove(item.id)} aria-label={`Remove item ${n}`} title="Remove item">
+          <Trash2 size={15} />
+        </button>
+      </td>
+    </tr>
   );
 }
