@@ -9,8 +9,10 @@
 - Preview: the on-screen preview and the PDF are drawn from one shared page layout with the same embedded fonts, so line breaks and page breaks match exactly.
 - Long content: descriptions and addresses wrap within their columns; long item tables continue onto new pages with repeated column headers; every page is numbered.
 - Currencies: IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY, each in its local number format.
-- Fields: invoice number, issue date, client company name, address, company ID and VAT number; sender name, address and VAT number; line items (description, quantity, unit price); bank name, account name, account number, SWIFT/BIC; contact email and phone.
-- Calculation: each line amount is quantity × unit price, and the total due is their sum. Tax is not calculated automatically; it can be added as a line item.
+- Fields: invoice number, issue date, client company name, address, company ID and VAT number; sender name, address and VAT number; line items (description, quantity, unit price); discount; tax rate; bank name, account name, account number, SWIFT/BIC; contact email and phone.
+- Calculation: each line amount is quantity × unit price; the subtotal is their sum. An optional discount (percentage or fixed amount) is subtracted, then an optional tax rate (percent) is applied to the discounted amount. When a discount or tax is entered, the invoice shows subtotal, discount and tax lines above the total due. Each step is rounded to the currency's decimals.
+- Negative amounts: line items can have a negative quantity or price (credits, refunds); negative figures are shown in red in the preview and PDF.
+- Saved invoices: up to five invoices can be saved in the browser and are listed with invoice number, date, client and total. Saving an existing invoice number asks whether to overwrite it or change the number.
 - Output: A4 PDF (210 × 297 mm) with an embedded Unicode font (Inter), so accented and Central European characters render correctly.
 - Author: Alvian Zachry Faturrahman. Open source: https://github.com/alvianzf/invoice-generator
 

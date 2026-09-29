@@ -1,5 +1,5 @@
 import { InvoiceData } from "../types";
-import { formatInvoiceDate, isBlankItem, itemAmount, invoiceTotal } from "../lib/invoice";
+import { computeTotals, formatInvoiceDate, isBlankItem, itemAmount } from "../lib/invoice";
 import { formatMoney, formatNumber, formatQuantity, getCurrency, parseNumber } from "../lib/money";
 
 /*
@@ -39,6 +39,7 @@ export const COLORS = {
   muted: [120, 113, 108],
   rule: [231, 226, 222],
   accent: [139, 26, 36],
+  negative: [200, 30, 45],
   tint: [250, 241, 240],
 } satisfies Record<string, RGB>;
 
@@ -64,6 +65,9 @@ const STYLES = {
   note: { font: "regular", size: 8.5, color: COLORS.muted },
   footer: { font: "regular", size: 7.5, color: COLORS.muted },
 } satisfies Record<string, TextStyle>;
+
+/** Negative figures print in red. */
+const signed = (style: TextStyle, value: number): TextStyle => (value < 0 ? { ...style, color: COLORS.negative } : style);
 
 const lineHeight = (s: TextStyle) => s.size * PT_TO_MM * (s.leading ?? 1.42);
 
@@ -315,15 +319,16 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
   }
   items.forEach((item, i) => {
     const priced = item.quantity.trim() !== "" && item.price.trim() !== "";
+    const amount = itemAmount(item);
     const qty = item.quantity.trim() ? formatQuantity(parseNumber(item.quantity), currency) : "";
     const price = item.price.trim() ? formatNumber(parseNumber(item.price), currency) : "";
     flow.row(
       [
         { ...col.index, lines: L(String(i + 1), STYLES.cellMuted, col.index.width) },
         { ...col.desc, lines: L(item.description || "—", STYLES.body, col.desc.width) },
-        { ...col.qty, align: "right", lines: L(qty, STYLES.body, col.qty.width) },
-        { ...col.price, align: "right", lines: L(price, STYLES.body, col.price.width) },
-        { ...col.amount, align: "right", lines: L(priced ? formatNumber(itemAmount(item), currency) : "", STYLES.body, col.amount.width) },
+        { ...col.qty, align: "right", lines: L(qty, signed(STYLES.body, parseNumber(item.quantity)), col.qty.width) },
+        { ...col.price, align: "right", lines: L(price, signed(STYLES.body, parseNumber(item.price)), col.price.width) },
+        { ...col.amount, align: "right", lines: L(priced ? formatNumber(amount, currency) : "", signed(STYLES.body, amount), col.amount.width) },
       ],
       { padY: 3.2, after: separator }
     );
@@ -331,13 +336,32 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
   flow.repeat = null;
   flow.y += 5;
 
-  // Total.
+  // Totals: subtotal, discount and tax lines only when an adjustment is entered.
+  const totals = computeTotals(data);
   const totalWidth = 84;
   const totalX = MARGIN + CONTENT_WIDTH - totalWidth;
+  const breakdown: [string, string, number][] = [];
+  if (totals.discountLabel || totals.taxLabel) {
+    breakdown.push(["Subtotal", formatNumber(totals.subtotal, currency), totals.subtotal]);
+    if (totals.discountLabel) breakdown.push([totals.discountLabel, formatNumber(-totals.discount, currency), -totals.discount]);
+    if (totals.taxLabel) breakdown.push([totals.taxLabel, formatNumber(totals.tax, currency), totals.tax]);
+  }
+  // Keep the breakdown and the total on the same page.
+  flow.ensure(breakdown.length * 6.5 + 22);
+  for (const [label, value, raw] of breakdown) {
+    flow.row(
+      [
+        { x: totalX + 5, width: 44, lines: L(label, STYLES.bodyMuted, 44) },
+        { x: totalX + 49, width: totalWidth - 54, align: "right", lines: L(value, signed(STYLES.body, raw), totalWidth - 54) },
+      ],
+      { padY: 1.4, after: (y) => flow.rule(y, COLORS.rule, 0.2, totalX + 5, totalX + totalWidth - 5) }
+    );
+  }
+  if (breakdown.length) flow.y += 2.5;
   flow.row(
     [
       { x: totalX + 5, width: 26, lines: L("TOTAL DUE", STYLES.totalLabel, 26) },
-      { x: totalX + 31, width: totalWidth - 36, align: "right", lines: L(formatMoney(invoiceTotal(data), currency), STYLES.totalValue, totalWidth - 36) },
+      { x: totalX + 31, width: totalWidth - 36, align: "right", lines: L(formatMoney(totals.total, currency), signed(STYLES.totalValue, totals.total), totalWidth - 36) },
     ],
     {
       padY: 4.5,

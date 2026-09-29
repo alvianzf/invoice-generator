@@ -53,6 +53,9 @@
               "Long descriptions and addresses wrap automatically",
               "Tables continue across pages with repeated headers and page numbers",
               "Automatic line totals (quantity × unit price) and grand total",
+              "Optional discount (percentage or fixed amount) and tax rate, with subtotal breakdown",
+              "Negative line items for credits and refunds, shown in red",
+              "Save up to five invoices in the browser and reopen them later",
               "Currencies: IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY",
               "Embedded Unicode font for accented and Central European characters",
               "No account, no watermark, data saved only in the browser"
@@ -73,7 +76,7 @@
             "totalTime": "PT2M",
             "step": [
               { "@type": "HowToStep", "position": 1, "name": "Add the parties", "text": "Enter who you are billing and your own details, including VAT or company IDs if needed." },
-              { "@type": "HowToStep", "position": 2, "name": "List your work", "text": "Add line items with a quantity and unit price. Amounts and the total due are calculated for you." },
+              { "@type": "HowToStep", "position": 2, "name": "List your work", "text": "Add line items with a quantity and unit price, plus an optional discount and tax rate. Amounts, subtotal and the total due are calculated for you." },
               { "@type": "HowToStep", "position": 3, "name": "Download the PDF", "text": "Check the live A4 preview, which matches the PDF exactly, then download it with one click." }
             ]
           },
@@ -85,7 +88,8 @@
               { "@type": "Question", "name": "What happens when a description or address is very long?", "acceptedAnswer": { "@type": "Answer", "text": "Text wraps inside its column using the real font measurements. If the items run past the bottom of the page, the table continues on a new page with the column headers repeated, and every page is numbered." } },
               { "@type": "Question", "name": "Does the preview match the downloaded PDF?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The preview and the PDF are drawn from the same page layout, with the same embedded fonts, so line breaks and page breaks are identical." } },
               { "@type": "Question", "name": "Which currencies are supported?", "acceptedAnswer": { "@type": "Answer", "text": "Indonesian Rupiah (IDR), US Dollar (USD), Euro (EUR), British Pound (GBP), Singapore Dollar (SGD), Australian Dollar (AUD), Malaysian Ringgit (MYR) and Japanese Yen (JPY), each formatted in its local number style." } },
-              { "@type": "Question", "name": "Can I use it for VAT invoices?", "acceptedAnswer": { "@type": "Answer", "text": "It includes fields for both parties' VAT numbers and the client's company ID. It does not calculate tax for you; add tax as its own line item if your invoice needs it." } }
+              { "@type": "Question", "name": "Can I save invoices and come back to them?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can save up to five invoices in your browser. Each one is listed with its invoice number, date, client and total, and can be reopened or deleted. Saving a number that already exists asks whether to overwrite it or change the number." } },
+              { "@type": "Question", "name": "Can I use it for VAT invoices?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Enter a tax rate in percent and the invoice shows the subtotal, any discount, the tax and the total due; tax is applied after the discount. There are also fields for both parties' VAT numbers and the client's company ID." } }
             ]
           }
         ]
@@ -163,7 +167,7 @@
           <li class="glass reveal p-7" style="--d: 0.1s">
             <span class="font-display text-5xl text-ruby-700">02</span>
             <h3 class="mt-4 text-lg font-semibold">List your work</h3>
-            <p class="mt-2 leading-relaxed text-ink-soft">Add line items with a quantity and unit price. Every amount and the total due are calculated as you type.</p>
+            <p class="mt-2 leading-relaxed text-ink-soft">Add line items with a quantity and unit price, plus an optional discount and tax rate. Every amount and the total due are calculated as you type.</p>
           </li>
           <li class="glass reveal p-7" style="--d: 0.2s">
             <span class="font-display text-5xl text-ruby-700">03</span>
@@ -189,6 +193,10 @@
             <div>
               <dt class="font-semibold">Private by design</dt>
               <dd class="mt-1.5 leading-relaxed text-ink-soft">Your details are saved only in your browser's local storage. The PDF is generated on your device, with no uploads and no analytics.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">Discounts, tax and credits</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">Add a percentage or fixed discount and a tax rate; the invoice shows a subtotal breakdown. Negative line items for credits print in red.</dd>
             </div>
             <div>
               <dt class="font-semibold">Eight currencies</dt>
@@ -231,8 +239,12 @@
             <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Indonesian Rupiah (IDR), US Dollar (USD), Euro (EUR), British Pound (GBP), Singapore Dollar (SGD), Australian Dollar (AUD), Malaysian Ringgit (MYR) and Japanese Yen (JPY), each formatted in its local number style.</p>
           </details>
           <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I save invoices and come back to them?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. You can save up to five invoices in your browser. Each one is listed with its invoice number, date, client and total, and can be reopened or deleted. Saving a number that already exists asks whether to overwrite it or change the number.</p>
+          </details>
+          <details class="glass reveal p-0">
             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I use it for VAT invoices?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
-            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">It includes fields for both parties' VAT numbers and the client's company ID. It does not calculate tax for you; add tax as its own line item if your invoice needs it.</p>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. Enter a tax rate in percent and the invoice shows the subtotal, any discount, the tax and the total due; tax is applied after the discount. There are also fields for both parties' VAT numbers and the client's company ID.</p>
           </details>
         </div>
       </section>

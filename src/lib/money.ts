@@ -58,11 +58,16 @@ export function parseNumber(input: string): number {
   return negative ? -value : value;
 }
 
+/** Negative values use a true minus sign; values that round to zero never print as "-0". */
 export function formatNumber(value: number, currency: Currency): string {
+  const factor = 10 ** currency.decimals;
+  const rounded = Math.round(value * factor) / factor || 0;
   return new Intl.NumberFormat(currency.locale, {
     minimumFractionDigits: currency.decimals,
     maximumFractionDigits: currency.decimals,
-  }).format(value);
+  })
+    .format(rounded)
+    .replace("-", "\u2212");
 }
 
 export function formatMoney(value: number, currency: Currency): string {
@@ -73,5 +78,7 @@ export function formatMoney(value: number, currency: Currency): string {
 export function formatQuantity(value: number, currency: Currency): string {
   return new Intl.NumberFormat(currency.locale, {
     maximumFractionDigits: 3,
-  }).format(value);
+  })
+    .format(value || 0)
+    .replace("-", "\u2212");
 }

@@ -111,6 +111,11 @@
   .btn-glass:active {
     transform: scale(0.97);
   }
+  .btn-glass:disabled {
+    @apply cursor-default text-ink-mute opacity-60;
+    transform: none;
+    border-color: rgba(28, 25, 23, 0.08);
+  }
 
   .icon-btn {
     @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-mute transition;

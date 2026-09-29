@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { InvoiceData, InvoiceItem } from "../types";
-import { parseNumber } from "./money";
+import { formatQuantity, getCurrency, parseNumber } from "./money";
 
 const STORAGE_KEY = "invoiceGeneratorData";
 
@@ -37,6 +37,9 @@ export const createInvoice = (): InvoiceData => ({
   fromAddress: "",
   fromVat: "",
   items: [emptyItem()],
+  discount: "",
+  discountType: "percent",
+  taxRate: "",
   bankName: "",
   accountName: "",
   accountNumber: "",
@@ -45,14 +48,11 @@ export const createInvoice = (): InvoiceData => ({
   contactPhone: "",
 });
 
-/** Merges saved data over defaults so older saves (no currency, stored amounts) still load. */
-function load(): InvoiceData {
+/** Merges stored data over defaults so older saves (no currency, stored amounts) still load. */
+export function normalizeInvoice(saved: Partial<InvoiceData>): InvoiceData {
   const fresh = createInvoice();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return fresh;
-    const saved = JSON.parse(raw) as Partial<InvoiceData>;
-    const items = Array.isArray(saved.items) && saved.items.length
+  const items =
+    Array.isArray(saved.items) && saved.items.length
       ? saved.items.map((item) => ({
           id: item.id || newId(),
           description: item.description ?? "",
@@ -60,9 +60,15 @@ function load(): InvoiceData {
           price: item.price ?? "",
         }))
       : fresh.items;
-    return { ...fresh, ...saved, items };
+  return { ...fresh, ...saved, items };
+}
+
+function load(): InvoiceData {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? normalizeInvoice(JSON.parse(raw)) : createInvoice();
   } catch {
-    return fresh;
+    return createInvoice();
   }
 }
 
@@ -83,8 +89,50 @@ export function useInvoice() {
 export const itemAmount = (item: InvoiceItem) =>
   parseNumber(item.quantity) * parseNumber(item.price);
 
-export const invoiceTotal = (invoice: InvoiceData) =>
-  invoice.items.reduce((sum, item) => sum + itemAmount(item), 0);
+export interface Totals {
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+  /** e.g. "Discount (10%)"; null when no discount was entered. */
+  discountLabel: string | null;
+  /** e.g. "Tax (11%)"; null when no tax rate was entered. */
+  taxLabel: string | null;
+}
+
+/**
+ * Subtotal, then discount, then tax on the discounted amount. Every step is
+ * rounded to the currency's decimals so the printed lines add up exactly.
+ */
+export function computeTotals(invoice: InvoiceData): Totals {
+  const currency = getCurrency(invoice.currency);
+  const factor = 10 ** currency.decimals;
+  const round = (n: number) => Math.round(n * factor) / factor;
+
+  const subtotal = round(invoice.items.reduce((sum, item) => sum + round(itemAmount(item)), 0));
+
+  const hasDiscount = invoice.discount.trim() !== "";
+  const discountValue = Math.max(0, parseNumber(invoice.discount));
+  const isPercent = invoice.discountType !== "amount";
+  // A discount can reduce the subtotal to zero but never below it, and never applies to a negative subtotal.
+  const discount = !hasDiscount
+    ? 0
+    : Math.max(0, Math.min(subtotal, round(isPercent ? (subtotal * Math.min(discountValue, 100)) / 100 : discountValue)));
+
+  const hasTax = invoice.taxRate.trim() !== "";
+  const taxRate = Math.max(0, parseNumber(invoice.taxRate));
+  const tax = hasTax ? round(((subtotal - discount) * taxRate) / 100) : 0;
+
+  const percent = (n: number) => `${formatQuantity(n, currency)}%`;
+  return {
+    subtotal,
+    discount,
+    tax,
+    total: round(subtotal - discount + tax),
+    discountLabel: hasDiscount ? (isPercent ? `Discount (${percent(Math.min(discountValue, 100))})` : "Discount") : null,
+    taxLabel: hasTax ? `Tax (${percent(taxRate)})` : null,
+  };
+}
 
 export const isBlankItem = (item: InvoiceItem) =>
   !item.description.trim() && !item.quantity.trim() && !item.price.trim();

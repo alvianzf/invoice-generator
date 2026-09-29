@@ -5,6 +5,8 @@ export interface InvoiceItem {
   price: string;
 }
 
+export type DiscountType = "percent" | "amount";
+
 export interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
@@ -23,6 +25,11 @@ export interface InvoiceData {
 
   // Items
   items: InvoiceItem[];
+
+  // Adjustments (optional; blank means not applied)
+  discount: string;
+  discountType: DiscountType;
+  taxRate: string;
 
   // Payment Details
   bankName: string;

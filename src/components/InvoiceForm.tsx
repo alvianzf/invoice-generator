@@ -1,8 +1,9 @@
 import { ChangeEvent, Dispatch, SetStateAction, useId, useState } from "react";
 import { Building2, CalendarDays, Landmark, ListOrdered, Plus, RefreshCw, RotateCcw, Trash2, FileText } from "lucide-react";
 import { InvoiceData, InvoiceItem } from "../types";
-import { createInvoice, emptyItem, invoiceTotal, itemAmount, randomInvoiceNumber, todayISO } from "../lib/invoice";
-import { CURRENCIES, formatMoney, formatNumber, getCurrency } from "../lib/money";
+import { computeTotals, createInvoice, emptyItem, itemAmount, randomInvoiceNumber, todayISO } from "../lib/invoice";
+import { CURRENCIES, Currency, formatMoney, formatNumber, getCurrency, parseNumber } from "../lib/money";
+import SavedInvoices from "./SavedInvoices";
 import { AnimatedNumber, AutoTextarea, DownloadButton, DownloadState, Field, SectionCard, SelectField, TextareaField } from "./ui";
 
 interface Props {
@@ -18,6 +19,8 @@ type TextKey = { [K in keyof InvoiceData]: InvoiceData[K] extends string ? K : n
 export default function InvoiceForm({ invoice, setInvoice, onDownload, downloadState, engineReady }: Props) {
   const [leaving, setLeaving] = useState<Set<string>>(new Set());
   const currency = getCurrency(invoice.currency);
+  const totals = computeTotals(invoice);
+  const hasBreakdown = totals.discountLabel !== null || totals.taxLabel !== null;
 
   const bind = (name: TextKey) => ({
     name,
@@ -56,6 +59,8 @@ export default function InvoiceForm({ invoice, setInvoice, onDownload, downloadS
 
   return (
     <div className="space-y-6">
+      <SavedInvoices invoice={invoice} setInvoice={setInvoice} />
+
       <SectionCard icon={<FileText size={19} />} title="Invoice details" hint="Number, date and the currency you bill in." delay={0.05}>
         <div className="grid gap-4 sm:grid-cols-3">
           <InputWithAction
@@ -109,7 +114,7 @@ export default function InvoiceForm({ invoice, setInvoice, onDownload, downloadS
       <SectionCard
         icon={<ListOrdered size={19} />}
         title="Line items"
-        hint="Amount = quantity × unit price. Long descriptions wrap in the PDF."
+        hint="Amount = quantity × unit price. Discount and tax are optional; tax applies after the discount."
         delay={0.19}
       >
         <div className="relative -mx-1 overflow-x-auto px-1 pb-1">
@@ -133,24 +138,69 @@ export default function InvoiceForm({ invoice, setInvoice, onDownload, downloadS
                   item={item}
                   index={i}
                   leaving={leaving.has(item.id)}
-                  amount={item.quantity.trim() && item.price.trim() ? formatNumber(itemAmount(item), currency) : ""}
+                  amount={item.quantity.trim() && item.price.trim() ? itemAmount(item) : null}
+                  currency={currency}
                   onChange={updateItem}
                   onRemove={removeItem}
                 />
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-ruby-50/70">
-                <td colSpan={2} className="py-3 pl-3">
+              <tr>
+                <td colSpan={6} className="border-b border-ink/[0.06] py-2.5 pl-3">
                   <button type="button" className="btn-glass py-1.5" onClick={addItem}>
                     <Plus size={15} /> Add item
                   </button>
                 </td>
-                <th scope="row" colSpan={2} className="px-2.5 py-3 text-right text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ruby-700">
+              </tr>
+              {hasBreakdown && (
+                <SummaryRow label="Subtotal" className="fade-in" negative={totals.subtotal < 0}>
+                  {formatNumber(totals.subtotal, currency)}
+                </SummaryRow>
+              )}
+              <SummaryRow
+                label="Discount"
+                negative={totals.discount > 0}
+                control={
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      aria-label={invoice.discountType === "percent" ? "Discount percentage" : `Discount amount in ${currency.code}`}
+                      className="cell-input w-24 border-ink/10 bg-white/60 text-right tabular-nums"
+                      inputMode="decimal"
+                      placeholder="Optional"
+                      {...bind("discount")}
+                    />
+                    <UnitToggle
+                      value={invoice.discountType}
+                      options={[
+                        ["percent", "%"],
+                        ["amount", currency.code],
+                      ]}
+                      onChange={(discountType) => setInvoice((prev) => ({ ...prev, discountType }))}
+                    />
+                  </div>
+                }
+              >
+                {totals.discountLabel ? formatNumber(-totals.discount, currency) : <span className="font-normal text-ink-mute/50">—</span>}
+              </SummaryRow>
+              <SummaryRow
+                label="Tax"
+                negative={totals.tax < 0}
+                control={
+                  <div className="relative">
+                    <input aria-label="Tax rate in percent" className="cell-input w-24 border-ink/10 bg-white/60 pr-7 text-right tabular-nums" inputMode="decimal" placeholder="Optional" {...bind("taxRate")} />
+                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-ink-mute">%</span>
+                  </div>
+                }
+              >
+                {totals.taxLabel ? formatNumber(totals.tax, currency) : <span className="font-normal text-ink-mute/50">—</span>}
+              </SummaryRow>
+              <tr className="bg-ruby-50/70">
+                <th scope="row" colSpan={4} className="px-2.5 py-3.5 text-right text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ruby-700">
                   Total due
                 </th>
-                <td className="whitespace-nowrap px-2.5 py-3 text-right text-base font-semibold tabular-nums text-ruby-700">
-                  <AnimatedNumber value={invoiceTotal(invoice)} format={(n) => formatMoney(n, currency)} />
+                <td className={`whitespace-nowrap px-2.5 py-3.5 text-right text-base font-semibold tabular-nums ${totals.total < 0 ? "text-negative" : "text-ruby-700"}`}>
+                  <AnimatedNumber value={totals.total} format={(n) => formatMoney(n, currency)} />
                 </td>
                 <td />
               </tr>
@@ -221,18 +271,67 @@ function InputWithAction({
   );
 }
 
+function SummaryRow({
+  label,
+  control,
+  negative = false,
+  className = "",
+  children,
+}: {
+  label: string;
+  control?: React.ReactNode;
+  negative?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <tr className={`[&>*]:border-b [&>*]:border-ink/[0.06] ${className}`}>
+      <th scope="row" colSpan={4} className="px-2.5 py-2 text-right font-normal">
+        <div className="flex items-center justify-end gap-3">
+          <span className="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ink-mute">{label}</span>
+          {control}
+        </div>
+      </th>
+      <td className={`whitespace-nowrap px-2.5 py-2 text-right text-sm font-semibold tabular-nums ${negative ? "text-negative" : "text-ink"}`}>{children}</td>
+      <td />
+    </tr>
+  );
+}
+
+function UnitToggle<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (value: T) => void }) {
+  return (
+    <div className="inline-flex rounded-lg bg-ink/[0.05] p-0.5" role="group" aria-label="Discount type">
+      {options.map(([option, label]) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={value === option}
+          onClick={() => onChange(option)}
+          className={`min-w-[2.25rem] rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+            value === option ? "bg-white text-ruby-700 shadow-[0_1px_3px_rgba(28,25,23,.15)]" : "text-ink-mute hover:text-ink"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ItemRow({
   item,
   index,
   leaving,
   amount,
+  currency,
   onChange,
   onRemove,
 }: {
   item: InvoiceItem;
   index: number;
   leaving: boolean;
-  amount: string;
+  amount: number | null;
+  currency: Currency;
   onChange: (id: string, field: keyof InvoiceItem, value: string) => void;
   onRemove: (id: string) => void;
 }) {
@@ -254,12 +353,14 @@ function ItemRow({
         />
       </td>
       <td className="px-1 py-1.5">
-        <input aria-label={`Item ${n} quantity`} className="cell-input text-right tabular-nums" inputMode="decimal" value={item.quantity} placeholder="1" onChange={(e) => onChange(item.id, "quantity", e.target.value)} />
+        <input aria-label={`Item ${n} quantity`} className={`cell-input text-right tabular-nums ${parseNumber(item.quantity) < 0 ? "text-negative" : ""}`} inputMode="decimal" value={item.quantity} placeholder="1" onChange={(e) => onChange(item.id, "quantity", e.target.value)} />
       </td>
       <td className="px-1 py-1.5">
-        <input aria-label={`Item ${n} unit price`} className="cell-input text-right tabular-nums" inputMode="decimal" value={item.price} placeholder="27.500.000" onChange={(e) => onChange(item.id, "price", e.target.value)} />
+        <input aria-label={`Item ${n} unit price`} className={`cell-input text-right tabular-nums ${parseNumber(item.price) < 0 ? "text-negative" : ""}`} inputMode="decimal" value={item.price} placeholder="27.500.000" onChange={(e) => onChange(item.id, "price", e.target.value)} />
       </td>
-      <td className="whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-semibold tabular-nums text-ink">{amount || <span className="font-normal text-ink-mute/50">—</span>}</td>
+      <td className={`whitespace-nowrap px-2.5 py-3.5 text-right text-sm font-semibold tabular-nums ${amount !== null && amount < 0 ? "text-negative" : "text-ink"}`}>
+        {amount !== null ? formatNumber(amount, currency) : <span className="font-normal text-ink-mute/50">—</span>}
+      </td>
       <td className="py-1.5 pr-2 text-right">
         <button type="button" className="icon-btn opacity-60 transition group-hover:opacity-100 focus-visible:opacity-100" onClick={() => onRemove(item.id)} aria-label={`Remove item ${n}`} title="Remove item">
           <Trash2 size={15} />

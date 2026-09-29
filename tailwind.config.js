@@ -4,6 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        negative: '#C81E2D',
         paper: { DEFAULT: '#F7F4EF', deep: '#EFE9E1' },
         ink: { DEFAULT: '#1C1917', soft: '#57534E', mute: '#8A837D' },
         ruby: {
