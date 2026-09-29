@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { InvoiceData, InvoiceItem } from "../types";
 import { formatQuantity, getCurrency, parseNumber } from "./money";
-
-const STORAGE_KEY = "invoiceGeneratorData";
+import { DocKind, DOCS } from "./docs";
+import { quoteClosingTemplate, quoteIntroTemplate } from "./templates";
 
 export const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-export const randomInvoiceNumber = () =>
-  `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+export const randomInvoiceNumber = (kind: DocKind = "invoice") =>
+  `${DOCS[kind].numberPrefix}-${Math.floor(1000 + Math.random() * 9000)}`;
 
 export const todayISO = () => {
   const d = new Date();
@@ -18,16 +18,19 @@ export const todayISO = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-export const emptyItem = (): InvoiceItem => ({
+export const emptyItem = (kind: InvoiceItem["kind"] = "item"): InvoiceItem => ({
   id: newId(),
+  kind,
   description: "",
   quantity: "",
+  unit: "",
   price: "",
 });
 
-export const createInvoice = (): InvoiceData => ({
-  invoiceNumber: randomInvoiceNumber(),
+export const createInvoice = (kind: DocKind = "invoice"): InvoiceData => ({
+  invoiceNumber: randomInvoiceNumber(kind),
   invoiceDate: todayISO(),
+  validUntil: "",
   currency: "IDR",
   billedToCompanyName: "",
   billedToAddress: "",
@@ -36,10 +39,12 @@ export const createInvoice = (): InvoiceData => ({
   fromName: "",
   fromAddress: "",
   fromVat: "",
+  introText: kind === "quote" ? quoteIntroTemplate() : null,
   items: [emptyItem()],
   discount: "",
   discountType: "percent",
   taxRate: "",
+  closingText: kind === "quote" ? quoteClosingTemplate() : null,
   bankName: "",
   accountName: "",
   accountNumber: "",
@@ -49,45 +54,64 @@ export const createInvoice = (): InvoiceData => ({
 });
 
 /** Merges stored data over defaults so older saves (no currency, stored amounts) still load. */
-export function normalizeInvoice(saved: Partial<InvoiceData>): InvoiceData {
-  const fresh = createInvoice();
+export function normalizeInvoice(saved: Partial<InvoiceData>, kind: DocKind = "invoice"): InvoiceData {
+  const fresh = createInvoice(kind);
   const items =
     Array.isArray(saved.items) && saved.items.length
       ? saved.items.map((item) => ({
           id: item.id || newId(),
+          kind: item.kind === "heading" ? ("heading" as const) : ("item" as const),
           description: item.description ?? "",
           quantity: item.quantity ?? "",
+          unit: item.unit ?? "",
           price: item.price ?? "",
         }))
       : fresh.items;
   return { ...fresh, ...saved, items };
 }
 
-function load(): InvoiceData {
+function load(kind: DocKind): InvoiceData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? normalizeInvoice(JSON.parse(raw)) : createInvoice();
+    const raw = localStorage.getItem(DOCS[kind].draftKey);
+    return raw ? normalizeInvoice(JSON.parse(raw), kind) : createInvoice(kind);
   } catch {
-    return createInvoice();
+    return createInvoice(kind);
   }
 }
 
-export function useInvoice() {
-  const [invoice, setInvoice] = useState<InvoiceData>(load);
+/** The working draft for one document kind, persisted in this browser. */
+export function useInvoice(kind: DocKind = "invoice") {
+  const [invoice, setInvoice] = useState<InvoiceData>(() => load(kind));
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(invoice));
+      localStorage.setItem(DOCS[kind].draftKey, JSON.stringify(invoice));
     } catch {
       // Storage can be unavailable (private mode, quota); the app still works.
     }
-  }, [invoice]);
+  }, [kind, invoice]);
 
   return [invoice, setInvoice] as const;
 }
 
+/** True when nothing worth keeping has been entered. */
+export const isBlankDraft = (data: InvoiceData) =>
+  data.items.every(isBlankItem) && !data.billedToCompanyName.trim() && !data.billedToAddress.trim();
+
+/** A new invoice carrying over everything from a quote, with its own number and today's date. */
+export const quoteToInvoice = (quote: InvoiceData): InvoiceData => ({
+  ...JSON.parse(JSON.stringify(quote)),
+  invoiceNumber: randomInvoiceNumber("invoice"),
+  invoiceDate: todayISO(),
+  validUntil: "",
+  // The quote's pitch and terms don't belong on an invoice.
+  introText: null,
+  closingText: null,
+  items: quote.items.map((item) => ({ ...item, id: newId() })),
+});
+
 export const itemAmount = (item: InvoiceItem) =>
-  parseNumber(item.quantity) * parseNumber(item.price);
+  item.kind === "heading" ? 0 : parseNumber(item.quantity) * parseNumber(item.price);
 
 export interface Totals {
   subtotal: number;
@@ -135,7 +159,7 @@ export function computeTotals(invoice: InvoiceData): Totals {
 }
 
 export const isBlankItem = (item: InvoiceItem) =>
-  !item.description.trim() && !item.quantity.trim() && !item.price.trim();
+  !item.description.trim() && (item.kind === "heading" || (!item.quantity.trim() && !item.unit.trim() && !item.price.trim()));
 
 export function formatInvoiceDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);

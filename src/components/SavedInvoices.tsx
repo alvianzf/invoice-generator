@@ -4,7 +4,9 @@ import { InvoiceData } from "../types";
 import { computeTotals, formatInvoiceDate } from "../lib/invoice";
 import { formatMoney, getCurrency } from "../lib/money";
 import { MAX_SAVED, SavedInvoice, useSavedInvoices } from "../lib/saved";
+import { DocConfig } from "../lib/docs";
 import { SectionCard } from "./ui";
+import { useConfirm } from "../lib/confirm";
 
 type Notice =
   | { kind: "info"; text: string }
@@ -13,9 +15,19 @@ type Notice =
 
 const isSame = (a: InvoiceData, b: InvoiceData) => JSON.stringify(a) === JSON.stringify(b);
 
-export default function SavedInvoices({ invoice, setInvoice }: { invoice: InvoiceData; setInvoice: Dispatch<SetStateAction<InvoiceData>> }) {
-  const { saved, save, remove, findFor } = useSavedInvoices();
+export default function SavedInvoices({
+  doc,
+  invoice,
+  setInvoice,
+}: {
+  doc: DocConfig;
+  invoice: InvoiceData;
+  setInvoice: Dispatch<SetStateAction<InvoiceData>>;
+}) {
+  const { saved, save, remove, findFor } = useSavedInvoices(doc.kind);
+  const plural = doc.plural.toLowerCase();
   const [notice, setNotice] = useState<Notice | null>(null);
+  const confirm = useConfirm();
   const timer = useRef<number>();
 
   // Informational notices fade on their own; questions wait for an answer.
@@ -25,7 +37,7 @@ export default function SavedInvoices({ invoice, setInvoice }: { invoice: Invoic
     return () => window.clearTimeout(timer.current);
   }, [notice]);
 
-  const number = invoice.invoiceNumber.trim() || "this invoice";
+  const number = invoice.invoiceNumber.trim() || `this ${doc.noun}`;
   const current = findFor(invoice);
   const upToDate = current ? isSame(current.data, invoice) : false;
 
@@ -44,29 +56,49 @@ export default function SavedInvoices({ invoice, setInvoice }: { invoice: Invoic
     input?.select();
   };
 
-  const open = (entry: SavedInvoice) => {
+  const open = async (entry: SavedInvoice) => {
     if (isSame(entry.data, invoice)) return;
     const editingSaved = current && isSame(current.data, invoice);
-    if (!editingSaved && !window.confirm(`Open ${entry.data.invoiceNumber || "this invoice"}? Unsaved changes to the invoice you're editing will be lost.`)) return;
+    if (
+      !editingSaved &&
+      !(await confirm({
+        title: `Open ${entry.data.invoiceNumber || `this ${doc.noun}`}?`,
+        message: `The ${doc.noun} you're editing has unsaved changes. They'll be lost unless you save it first.`,
+        confirmText: "Open without saving",
+        tone: "danger",
+      }))
+    )
+      return;
     setInvoice(JSON.parse(JSON.stringify(entry.data)));
-    setNotice({ kind: "info", text: `Opened ${entry.data.invoiceNumber || "invoice"}.` });
+    setNotice({ kind: "info", text: `Opened ${entry.data.invoiceNumber || doc.noun}.` });
   };
 
-  const del = (entry: SavedInvoice) => {
-    if (!window.confirm(`Delete saved invoice ${entry.data.invoiceNumber || ""}? This can't be undone.`)) return;
+  const del = async (entry: SavedInvoice) => {
+    const ok = await confirm({
+      title: `Delete ${entry.data.invoiceNumber || `this ${doc.noun}`}?`,
+      message: (
+        <>
+          The saved copy for <strong className="font-semibold text-ink">{entry.data.billedToCompanyName || "this client"}</strong> will be removed from
+          this browser. This can't be undone.
+        </>
+      ),
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     remove(entry.id);
-    setNotice({ kind: "info", text: `Deleted ${entry.data.invoiceNumber || "invoice"}.` });
+    setNotice({ kind: "info", text: `Deleted ${entry.data.invoiceNumber || doc.noun}.` });
   };
 
   return (
     <SectionCard
       icon={<Archive size={19} />}
-      title="Saved invoices"
-      hint={`Keep up to ${MAX_SAVED} invoices in this browser. ${saved.length} of ${MAX_SAVED} used.`}
+      title={`Saved ${plural}`}
+      hint={`Keep up to ${MAX_SAVED} ${plural} in this browser. ${saved.length} of ${MAX_SAVED} used.`}
       delay={0}
       aside={
         <button type="button" className="btn-glass shrink-0" onClick={() => doSave()} disabled={upToDate} title={upToDate ? "No changes since it was saved" : undefined}>
-          <Save size={15} /> {upToDate ? "Saved" : "Save invoice"}
+          <Save size={15} /> {upToDate ? "Saved" : `Save ${doc.noun}`}
         </button>
       }
     >
@@ -80,11 +112,11 @@ export default function SavedInvoices({ invoice, setInvoice }: { invoice: Invoic
         >
           <p className="min-w-0 flex-1">
             {notice.kind === "info" && notice.text}
-            {notice.kind === "full" && `You can keep up to ${MAX_SAVED} invoices. Delete one below to save ${number}.`}
+            {notice.kind === "full" && `You can keep up to ${MAX_SAVED} ${plural}. Delete one below to save ${number}.`}
             {notice.kind === "duplicate" && (
               <>
                 <strong className="font-semibold">{notice.existing.data.invoiceNumber}</strong> is already saved (
-                {formatInvoiceDate(notice.existing.data.invoiceDate)}). Overwrite it, or change the invoice number?
+                {formatInvoiceDate(notice.existing.data.invoiceDate)}). Overwrite it, or change the {doc.noun} number?
               </>
             )}
           </p>
@@ -108,7 +140,7 @@ export default function SavedInvoices({ invoice, setInvoice }: { invoice: Invoic
 
       {saved.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/10 px-4 py-5 text-center text-sm text-ink-mute">
-          Nothing saved yet. Save this invoice to come back to it later.
+          Nothing saved yet. Save this {doc.noun} to come back to it later.
         </p>
       ) : (
         <ul className="divide-y divide-ink/[0.06] overflow-hidden rounded-2xl bg-white/55 ring-1 ring-black/[0.05]">

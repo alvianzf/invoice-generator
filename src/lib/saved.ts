@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { InvoiceData } from "../types";
 import { newId, normalizeInvoice } from "./invoice";
-
-const STORAGE_KEY = "invoiceGeneratorSaved";
+import { DocKind, DOCS } from "./docs";
 export const MAX_SAVED = 5;
 
 export interface SavedInvoice {
@@ -13,11 +12,11 @@ export interface SavedInvoice {
 
 export type SaveResult = "added" | "updated" | "full" | "duplicate";
 
-function load(): SavedInvoice[] {
+function load(kind: DocKind): SavedInvoice[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(DOCS[kind].savedKey);
     const list = raw ? (JSON.parse(raw) as SavedInvoice[]) : [];
-    return list.slice(0, MAX_SAVED).map((s) => ({ ...s, data: normalizeInvoice(s.data) }));
+    return list.slice(0, MAX_SAVED).map((s) => ({ ...s, data: normalizeInvoice(s.data, kind) }));
   } catch {
     return [];
   }
@@ -26,17 +25,17 @@ function load(): SavedInvoice[] {
 const sameNumber = (a: InvoiceData, b: InvoiceData) =>
   a.invoiceNumber.trim().toLowerCase() === b.invoiceNumber.trim().toLowerCase();
 
-/** Up to five saved invoices, newest first, kept in this browser only. */
-export function useSavedInvoices() {
-  const [saved, setSaved] = useState<SavedInvoice[]>(load);
+/** Up to five saved documents of one kind, newest first, kept in this browser only. */
+export function useSavedInvoices(kind: DocKind = "invoice") {
+  const [saved, setSaved] = useState<SavedInvoice[]>(() => load(kind));
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      localStorage.setItem(DOCS[kind].savedKey, JSON.stringify(saved));
     } catch {
       // Storage unavailable; the list still works for this session.
     }
-  }, [saved]);
+  }, [kind, saved]);
 
   /**
    * An invoice number that is already saved is only replaced with `overwrite`;

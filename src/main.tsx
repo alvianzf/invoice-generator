@@ -4,10 +4,13 @@ import '@fontsource-variable/inter';
 import '@fontsource/instrument-serif/400.css';
 import '@fontsource/instrument-serif/400-italic.css';
 import App from './App.tsx';
+import { ConfirmProvider } from './components/ConfirmDialog.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ConfirmProvider>
+      <App />
+    </ConfirmProvider>
   </StrictMode>
 );

@@ -39,6 +39,7 @@
             "@type": "WebApplication",
             "@id": "https://invoice.alvianzf.id/#app",
             "name": "Invoice Generator",
+            "alternateName": ["Invoice and Quote Generator", "Quote Generator"],
             "url": "https://invoice.alvianzf.id/",
             "description": "A free, browser-based invoice generator for freelancers and contractors. It shows a live A4 preview that is drawn from the same layout as the PDF, totals line items automatically, supports eight currencies, and stores data only in the browser.",
             "applicationCategory": "BusinessApplication",
@@ -56,6 +57,8 @@
               "Optional discount (percentage or fixed amount) and tax rate, with subtotal breakdown",
               "Negative line items for credits and refunds, shown in red",
               "Save up to five invoices in the browser and reopen them later",
+              "Quote generator with rich-text introduction and terms, section headings, units and validity date",
+              "Convert an accepted quote into an invoice in one click",
               "Currencies: IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY",
               "Embedded Unicode font for accented and Central European characters",
               "No account, no watermark, data saved only in the browser"
@@ -89,6 +92,7 @@
               { "@type": "Question", "name": "Does the preview match the downloaded PDF?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The preview and the PDF are drawn from the same page layout, with the same embedded fonts, so line breaks and page breaks are identical." } },
               { "@type": "Question", "name": "Which currencies are supported?", "acceptedAnswer": { "@type": "Answer", "text": "Indonesian Rupiah (IDR), US Dollar (USD), Euro (EUR), British Pound (GBP), Singapore Dollar (SGD), Australian Dollar (AUD), Malaysian Ringgit (MYR) and Japanese Yen (JPY), each formatted in its local number style." } },
               { "@type": "Question", "name": "Can I save invoices and come back to them?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can save up to five invoices in your browser. Each one is listed with its invoice number, date, client and total, and can be reopened or deleted. Saving a number that already exists asks whether to overwrite it or change the number." } },
+              { "@type": "Question", "name": "Can I make quotes and turn them into invoices?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Switch to Quotes to write a quotation with an introduction, section headings in the price table, units such as hours or days, a validity date and editable terms. When the client accepts, Create invoice copies the client, line items, discount and tax into a new invoice with its own number and today's date." } },
               { "@type": "Question", "name": "Can I use it for VAT invoices?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Enter a tax rate in percent and the invoice shows the subtotal, any discount, the tax and the total due; tax is applied after the discount. There are also fields for both parties' VAT numbers and the client's company ID." } }
             ]
           }
@@ -119,8 +123,10 @@
           </span>
         </a>
         <nav class="flex items-center gap-1 text-sm font-medium text-ink-soft" aria-label="Main">
-          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 sm:inline-block" href="#how">How it works</a>
-          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 sm:inline-block" href="#faq">FAQ</a>
+          <a class="rounded-full px-3 py-2 transition hover:text-ruby-700 aria-[current]:text-ruby-700" href="/" data-doc="invoice">Invoices</a>
+          <a class="rounded-full px-3 py-2 transition hover:text-ruby-700 aria-[current]:text-ruby-700" href="/quotes" data-doc="quote">Quotes</a>
+          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 md:inline-block" href="#how">How it works</a>
+          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 md:inline-block" href="#faq">FAQ</a>
           <a class="btn-glass" href="https://github.com/alvianzf/invoice-generator" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
             <span>GitHub</span>
@@ -134,14 +140,15 @@
         <div class="max-w-3xl">
           <p class="eyebrow rise">Free · No sign-up · Private</p>
           <h1 id="title" class="rise mt-4 font-display text-[2.9rem] leading-[0.98] tracking-tight text-ink sm:text-7xl" style="--d: 0.08s">
-            Invoices that look <em class="text-ruby-700">finished</em>, in the time it takes to type them.
+            Invoices and quotes that look <em class="text-ruby-700">finished</em>, in the time it takes to type them.
           </h1>
           <p class="rise mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft" style="--d: 0.16s">
-            A free invoice generator for freelancers and contractors. Fill in the form, watch a live A4 preview that matches the PDF line for line, and download a clean invoice. Nothing is uploaded; your details stay in your browser.
+            A free invoice and quote generator for freelancers and contractors. Fill in the form, watch a live A4 preview that matches the PDF line for line, and download a clean PDF. Turn an accepted quote into an invoice in one click. Nothing is uploaded; your details stay in your browser.
           </p>
           <ul class="rise mt-7 flex flex-wrap gap-2 text-sm text-ink-soft" style="--d: 0.24s">
             <li class="glass rounded-full px-3.5 py-1.5">Exact live PDF preview</li>
             <li class="glass rounded-full px-3.5 py-1.5">Long text wraps &amp; paginates</li>
+            <li class="glass rounded-full px-3.5 py-1.5">Quotes → invoices</li>
             <li class="glass rounded-full px-3.5 py-1.5">8 currencies</li>
             <li class="glass rounded-full px-3.5 py-1.5">No watermark</li>
           </ul>
@@ -195,6 +202,10 @@
               <dd class="mt-1.5 leading-relaxed text-ink-soft">Your details are saved only in your browser's local storage. The PDF is generated on your device, with no uploads and no analytics.</dd>
             </div>
             <div>
+              <dt class="font-semibold">Quotes that become invoices</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">Write quotes with an editable introduction and terms, section headings and units, then turn an accepted quote into an invoice in one click.</dd>
+            </div>
+            <div>
               <dt class="font-semibold">Discounts, tax and credits</dt>
               <dd class="mt-1.5 leading-relaxed text-ink-soft">Add a percentage or fixed discount and a tax rate; the invoice shows a subtotal breakdown. Negative line items for credits print in red.</dd>
             </div>
@@ -241,6 +252,10 @@
           <details class="glass reveal p-0">
             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I save invoices and come back to them?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
             <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. You can save up to five invoices in your browser. Each one is listed with its invoice number, date, client and total, and can be reopened or deleted. Saving a number that already exists asks whether to overwrite it or change the number.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I make quotes and turn them into invoices?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. Switch to Quotes to write a quotation with an introduction, section headings in the price table, units such as hours or days, a validity date and editable terms. When the client accepts, Create invoice copies the client, line items, discount and tax into a new invoice with its own number and today's date.</p>
           </details>
           <details class="glass reveal p-0">
             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I use it for VAT invoices?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>

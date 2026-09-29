@@ -1,5 +1,6 @@
-import { InvoiceData } from "../types";
+import { InvoiceData, RichDoc, RichNode } from "../types";
 import { computeTotals, formatInvoiceDate, isBlankItem, itemAmount } from "../lib/invoice";
+import { DocKind, DOCS } from "../lib/docs";
 import { formatMoney, formatNumber, formatQuantity, getCurrency, parseNumber } from "../lib/money";
 
 /*
@@ -9,7 +10,7 @@ import { formatMoney, formatNumber, formatQuantity, getCurrency, parseNumber } f
  */
 
 export type RGB = readonly [number, number, number];
-export type FontKey = "regular" | "bold" | "serif";
+export type FontKey = "regular" | "bold" | "italic" | "boldItalic" | "serif";
 
 export type Op =
   | { kind: "text"; x: number; y: number; text: string; font: FontKey; size: number; color: RGB }
@@ -63,6 +64,7 @@ const STYLES = {
   totalLabel: { font: "bold", size: 8, color: COLORS.accent },
   totalValue: { font: "bold", size: 14, color: COLORS.ink },
   note: { font: "regular", size: 8.5, color: COLORS.muted },
+  sectionHeading: { font: "bold", size: 9.5, color: COLORS.accent },
   footer: { font: "regular", size: 7.5, color: COLORS.muted },
 } satisfies Record<string, TextStyle>;
 
@@ -236,28 +238,184 @@ class Flow {
   }
 }
 
-export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
+/* ---------- Rich text (quote introduction and terms) ---------- */
+
+interface Token {
+  text: string;
+  font: FontKey;
+  underline: boolean;
+  /** Whitespace separated this token from the previous one. */
+  space: boolean;
+}
+
+interface Run {
+  x: number;
+  text: string;
+  font: FontKey;
+  underline: boolean;
+  width: number;
+}
+
+const RICH_SIZE = 9.5;
+const RICH_STYLE: TextStyle = { font: "regular", size: RICH_SIZE, color: COLORS.ink, leading: 1.5 };
+
+function fontFor(marks: RichNode["marks"]): FontKey {
+  const has = (t: string) => marks?.some((m) => m.type === t) ?? false;
+  if (has("bold") && has("italic")) return "boldItalic";
+  if (has("bold")) return "bold";
+  if (has("italic")) return "italic";
+  return "regular";
+}
+
+/** Splits inline content into words, one list per hard-break-separated segment. */
+function tokenize(nodes: RichNode[] = []): Token[][] {
+  const segments: Token[][] = [[]];
+  let space = false;
+  for (const node of nodes) {
+    if (node.type === "hardBreak") {
+      segments.push([]);
+      space = false;
+      continue;
+    }
+    if (node.type !== "text" || !node.text) continue;
+    const font = fontFor(node.marks);
+    const underline = node.marks?.some((m) => m.type === "underline") ?? false;
+    for (const part of node.text.split(/(\s+)/)) {
+      if (!part) continue;
+      if (/^\s+$/.test(part)) {
+        space = true;
+        continue;
+      }
+      const segment = segments[segments.length - 1];
+      segment.push({ text: part, font, underline, space: space && segment.length > 0 });
+      space = false;
+    }
+  }
+  return segments;
+}
+
+/** Greedy wrap of mixed-style words; adjacent same-style words merge into one run. */
+function wrapTokens(tokens: Token[], width: number, measure: Measure): Run[][] {
+  const lines: Run[][] = [];
+  let line: Run[] = [];
+  let x = 0;
+  const push = (text: string, font: FontKey, underline: boolean, gap: number) => {
+    const w = measure(text, font, RICH_SIZE);
+    const last = line[line.length - 1];
+    if (last && last.font === font && last.underline === underline) {
+      last.text += (gap ? " " : "") + text;
+      last.width = measure(last.text, font, RICH_SIZE);
+      x = last.x + last.width;
+    } else {
+      line.push({ x: x + gap, text, font, underline, width: w });
+      x += gap + w;
+    }
+  };
+  for (const token of tokens) {
+    const w = measure(token.text, token.font, RICH_SIZE);
+    const gap = token.space && line.length ? measure(" ", token.font, RICH_SIZE) : 0;
+    if (line.length && x + gap + w > width) {
+      lines.push(line);
+      line = [];
+      x = 0;
+    }
+    if (w <= width) {
+      push(token.text, token.font, token.underline, line.length && token.space ? gap : 0);
+      continue;
+    }
+    // A single word wider than the column breaks by character.
+    let chunk = "";
+    for (const ch of Array.from(token.text)) {
+      if (chunk && x + measure(chunk + ch, token.font, RICH_SIZE) > width) {
+        push(chunk, token.font, token.underline, 0);
+        lines.push(line);
+        line = [];
+        x = 0;
+        chunk = ch;
+      } else {
+        chunk += ch;
+      }
+    }
+    if (chunk) push(chunk, token.font, token.underline, 0);
+  }
+  lines.push(line);
+  return lines;
+}
+
+function renderRich(flow: Flow, measure: Measure, doc: RichDoc | null, x: number, width: number) {
+  const lh = lineHeight(RICH_STYLE);
+  const em = RICH_SIZE * PT_TO_MM;
+
+  const drawLine = (runs: Run[], left: number) => {
+    flow.ensure(lh);
+    const baseline = flow.y + (lh - em) / 2 + em * 0.8;
+    for (const run of runs) {
+      flow.ops.push({ kind: "text", x: left + run.x, y: baseline, text: run.text, font: run.font, size: RICH_SIZE, color: COLORS.ink });
+      if (run.underline) {
+        flow.ops.push({ kind: "line", x1: left + run.x, y1: baseline + 0.7, x2: left + run.x + run.width, y2: baseline + 0.7, color: COLORS.ink, width: 0.2 });
+      }
+    }
+    flow.y += lh;
+  };
+
+  const blocks = (nodes: RichNode[] = [], left: number, w: number, gap: number) => {
+    nodes.forEach((node, i) => {
+      const last = i === nodes.length - 1;
+      if (node.type === "paragraph" || node.type === "heading") {
+        for (const segment of tokenize(node.content)) {
+          for (const runs of wrapTokens(segment, w, measure)) drawLine(runs, left);
+        }
+        if (!last) flow.y += gap;
+      } else if (node.type === "bulletList" || node.type === "orderedList") {
+        const start = Number(node.attrs?.start ?? 1) || 1;
+        (node.content ?? []).forEach((item, n) => {
+          const marker = node.type === "bulletList" ? "\u2022" : `${start + n}.`;
+          const indent = node.type === "bulletList" ? 4.5 : 6;
+          flow.ensure(lh);
+          const baseline = flow.y + (lh - em) / 2 + em * 0.8;
+          flow.ops.push({ kind: "text", x: left + 0.5, y: baseline, text: marker, font: "regular", size: RICH_SIZE, color: COLORS.muted });
+          blocks(item.content, left + indent, w - indent, 0.6);
+          flow.y += 0.9;
+        });
+        if (!last) flow.y += gap;
+      } else if (node.content) {
+        blocks(node.content, left, w, gap);
+      }
+    });
+  };
+
+  blocks(doc?.content, x, width, 2.2);
+}
+
+/** True when a rich document has any visible text. */
+export const hasRichText = (doc: RichDoc | null) => {
+  const walk = (nodes: RichNode[] = []): boolean => nodes.some((n) => (n.text?.trim() ? true : walk(n.content)));
+  return !!doc && walk(doc.content);
+};
+
+export function layoutInvoice(data: InvoiceData, measure: Measure, kind: DocKind = "invoice"): Page[] {
+  const doc = DOCS[kind];
   const currency = getCurrency(data.currency);
-  const invoiceLabel = data.invoiceNumber.trim() ? `Invoice ${data.invoiceNumber.trim()}` : "Invoice";
+  const invoiceLabel = data.invoiceNumber.trim() ? `${doc.title} ${data.invoiceNumber.trim()}` : doc.title;
   const flow = new Flow(measure, `${invoiceLabel} (continued)`);
   const L = (text: string, style: TextStyle, width: number, gap?: number) => flow.lines(text, style, width, gap);
 
-  // Header: title on the left, invoice number and date on the right.
-  const metaWidth = 40;
-  const metaX2 = MARGIN + CONTENT_WIDTH - metaWidth;
-  const metaX1 = metaX2 - metaWidth - 6;
+  // Header: title on the left, number and dates on the right.
+  const meta: [string, string][] = [
+    [`${doc.title.toUpperCase()} NO.`, data.invoiceNumber || "—"],
+    ["ISSUE DATE", formatInvoiceDate(data.invoiceDate) || "—"],
+  ];
+  if (kind === "quote" && data.validUntil.trim()) meta.push(["VALID UNTIL", formatInvoiceDate(data.validUntil)]);
+  const metaGap = meta.length > 2 ? 4 : 6;
+  const metaWidth = meta.length > 2 ? 34 : 40;
+  const metaStart = MARGIN + CONTENT_WIDTH - meta.length * metaWidth - (meta.length - 1) * metaGap;
   flow.row([
-    { x: MARGIN, width: 80, lines: L("Invoice", STYLES.title, 80) },
-    {
-      x: metaX1,
+    { x: MARGIN, width: 60, lines: L(doc.title, STYLES.title, 60) },
+    ...meta.map(([label, value], i) => ({
+      x: metaStart + i * (metaWidth + metaGap),
       width: metaWidth,
-      lines: [...L("INVOICE NO.", STYLES.metaLabel, metaWidth, 1), ...L(data.invoiceNumber || "—", STYLES.metaValue, metaWidth)],
-    },
-    {
-      x: metaX2,
-      width: metaWidth,
-      lines: [...L("ISSUE DATE", STYLES.metaLabel, metaWidth, 1), ...L(formatInvoiceDate(data.invoiceDate) || "—", STYLES.metaValue, metaWidth)],
-    },
+      lines: [...L(label, STYLES.metaLabel, metaWidth, 1), ...L(value, STYLES.metaValue, metaWidth)],
+    })),
   ]);
   flow.y += 5;
   flow.rule(flow.y, COLORS.accent, 0.5);
@@ -275,7 +433,7 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
     {
       x: MARGIN,
       width: partyWidth,
-      lines: party("BILLED TO", data.billedToCompanyName, data.billedToAddress, [
+      lines: party(doc.clientLabel.toUpperCase(), data.billedToCompanyName, data.billedToAddress, [
         ["Company ID", data.billedToCompanyId],
         ["VAT", data.billedToVat],
       ]),
@@ -288,11 +446,19 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
   ]);
   flow.y += 11;
 
-  // Line items.
+  if (hasRichText(data.introText)) {
+    renderRich(flow, measure, data.introText, MARGIN, CONTENT_WIDTH);
+    flow.y += 9;
+  }
+
+  // Line items. A unit ("12 hrs") needs a wider quantity column.
+  const items = data.items.filter((item) => !isBlankItem(item));
+  const withUnits = items.some((item) => item.kind === "item" && item.unit.trim());
+  const qtyWidth = withUnits ? 26 : 17;
   const col = {
     index: { x: MARGIN, width: 7 },
-    desc: { x: MARGIN + 7, width: 86 },
-    qty: { x: MARGIN + 95, width: 17 },
+    desc: { x: MARGIN + 7, width: 86 - (qtyWidth - 17) },
+    qty: { x: MARGIN + 112 - qtyWidth, width: qtyWidth },
     price: { x: MARGIN + 114, width: 28 },
     amount: { x: MARGIN + 144, width: 30 },
   };
@@ -312,19 +478,32 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
   header();
   flow.repeat = header;
 
-  const items = data.items.filter((item) => !isBlankItem(item));
   const separator = (y: number) => flow.rule(y);
   if (items.length === 0) {
     flow.row([{ ...col.desc, lines: L("No line items yet", STYLES.bodyMuted, col.desc.width) }], { padY: 3.2, after: separator });
   }
-  items.forEach((item, i) => {
+  let number = 0;
+  items.forEach((item) => {
+    if (item.kind === "heading") {
+      // Section heading: full width, tinted, and kept on the same page as the row after it.
+      const lines = L(item.description, STYLES.sectionHeading, CONTENT_WIDTH - 6);
+      flow.ensure(lines.reduce((h, l) => h + lineBox(l), 0) + 16);
+      flow.row([{ x: MARGIN + 3, width: CONTENT_WIDTH - 6, lines }], {
+        padY: 2.6,
+        background: (top, h) => flow.ops.push({ kind: "rect", x: MARGIN, y: top + 0.6, w: CONTENT_WIDTH, h: h - 1.2, color: COLORS.tint, radius: 1 }),
+        after: separator,
+      });
+      return;
+    }
+    number += 1;
     const priced = item.quantity.trim() !== "" && item.price.trim() !== "";
     const amount = itemAmount(item);
-    const qty = item.quantity.trim() ? formatQuantity(parseNumber(item.quantity), currency) : "";
+    const qtyNumber = item.quantity.trim() ? formatQuantity(parseNumber(item.quantity), currency) : "";
+    const qty = [qtyNumber, item.unit.trim()].filter(Boolean).join(" ");
     const price = item.price.trim() ? formatNumber(parseNumber(item.price), currency) : "";
     flow.row(
       [
-        { ...col.index, lines: L(String(i + 1), STYLES.cellMuted, col.index.width) },
+        { ...col.index, lines: L(String(number), STYLES.cellMuted, col.index.width) },
         { ...col.desc, lines: L(item.description || "—", STYLES.body, col.desc.width) },
         { ...col.qty, align: "right", lines: L(qty, signed(STYLES.body, parseNumber(item.quantity)), col.qty.width) },
         { ...col.price, align: "right", lines: L(price, signed(STYLES.body, parseNumber(item.price)), col.price.width) },
@@ -360,7 +539,7 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
   if (breakdown.length) flow.y += 2.5;
   flow.row(
     [
-      { x: totalX + 5, width: 26, lines: L("TOTAL DUE", STYLES.totalLabel, 26) },
+      { x: totalX + 5, width: 26, lines: L(doc.totalLabel.toUpperCase(), STYLES.totalLabel, 26) },
       { x: totalX + 31, width: totalWidth - 36, align: "right", lines: L(formatMoney(totals.total, currency), signed(STYLES.totalValue, totals.total), totalWidth - 36) },
     ],
     {
@@ -369,6 +548,11 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
     }
   );
   flow.y += 12;
+
+  if (hasRichText(data.closingText)) {
+    renderRich(flow, measure, data.closingText, MARGIN, CONTENT_WIDTH);
+    flow.y += 10;
+  }
 
   // Payment details.
   const payment: [string, string][] = (
@@ -395,10 +579,13 @@ export function layoutInvoice(data: InvoiceData, measure: Measure): Page[] {
     flow.y += 9;
   }
 
-  // Contact note.
+  // Closing note: validity (quotes) and who to contact.
   const contacts = [data.contactEmail, data.contactPhone].map((s) => s.trim()).filter(Boolean);
-  if (contacts.length) {
-    const note = `For any questions about this invoice, please contact ${contacts.join(" or ")}.`;
+  const notes: string[] = [];
+  if (kind === "quote" && data.validUntil.trim()) notes.push(`This quote is valid until ${formatInvoiceDate(data.validUntil)}.`);
+  if (contacts.length) notes.push(`For any questions about this ${doc.noun}, please contact ${contacts.join(" or ")}.`);
+  if (notes.length) {
+    const note = notes.join(" ");
     flow.rule(flow.y);
     flow.y += 4;
     flow.row([{ x: MARGIN, width: CONTENT_WIDTH, lines: L(note, STYLES.note, CONTENT_WIDTH) }]);

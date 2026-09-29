@@ -2,19 +2,24 @@ import type { jsPDF as JsPDF } from "jspdf";
 import interRegularUrl from "../assets/fonts/Inter-Regular.ttf?url";
 import interSemiBoldUrl from "../assets/fonts/Inter-SemiBold.ttf?url";
 import serifUrl from "../assets/fonts/InstrumentSerif-Regular.ttf?url";
+import interItalicUrl from "../assets/fonts/Inter-Italic.ttf?url";
+import interSemiBoldItalicUrl from "../assets/fonts/Inter-SemiBoldItalic.ttf?url";
 import { InvoiceData } from "../types";
 import { FontKey, layoutInvoice, Measure, Page } from "./layout";
+import { DocKind, DOCS } from "../lib/docs";
 
 /** How each font key maps to jsPDF names and to the preview's CSS family. */
 export const FONTS: Record<FontKey, { url: string; file: string; pdfFamily: string; pdfStyle: string; cssFamily: string }> = {
   regular: { url: interRegularUrl, file: "Inter-Regular.ttf", pdfFamily: "Inter", pdfStyle: "normal", cssFamily: "PdfInterRegular" },
   bold: { url: interSemiBoldUrl, file: "Inter-SemiBold.ttf", pdfFamily: "Inter", pdfStyle: "bold", cssFamily: "PdfInterSemiBold" },
+  italic: { url: interItalicUrl, file: "Inter-Italic.ttf", pdfFamily: "Inter", pdfStyle: "italic", cssFamily: "PdfInterItalic" },
+  boldItalic: { url: interSemiBoldItalicUrl, file: "Inter-SemiBoldItalic.ttf", pdfFamily: "Inter", pdfStyle: "bolditalic", cssFamily: "PdfInterSemiBoldItalic" },
   serif: { url: serifUrl, file: "InstrumentSerif-Regular.ttf", pdfFamily: "InstrumentSerif", pdfStyle: "normal", cssFamily: "PdfSerif" },
 };
 
 export interface Engine {
-  layout: (data: InvoiceData) => Page[];
-  download: (data: InvoiceData) => void;
+  layout: (data: InvoiceData, kind?: DocKind) => Page[];
+  download: (data: InvoiceData, kind?: DocKind) => void;
 }
 
 function toBase64(buffer: ArrayBuffer): string {
@@ -77,19 +82,20 @@ async function createEngine(): Promise<Engine> {
     return width;
   };
 
-  const layout = (data: InvoiceData) => layoutInvoice(data, measure);
+  const layout = (data: InvoiceData, kind: DocKind = "invoice") => layoutInvoice(data, measure, kind);
 
-  const download = (data: InvoiceData) => {
+  const download = (data: InvoiceData, kind: DocKind = "invoice") => {
     const doc = createDoc();
+    const { title } = DOCS[kind];
     const number = data.invoiceNumber.trim();
     doc.setProperties({
-      title: number ? `Invoice ${number}` : "Invoice",
-      subject: "Invoice",
+      title: number ? `${title} ${number}` : title,
+      subject: title,
       author: data.fromName,
       creator: "Invoice Generator (invoice.alvianzf.id)",
     });
 
-    layout(data).forEach((page, i) => {
+    layout(data, kind).forEach((page, i) => {
       if (i > 0) doc.addPage();
       for (const op of page.ops) {
         if (op.kind === "text") {
@@ -108,8 +114,8 @@ async function createEngine(): Promise<Engine> {
       }
     });
 
-    const safeName = (number || "invoice").replace(/[^\w.-]+/g, "_");
-    doc.save(`Invoice_${safeName}.pdf`);
+    const safeName = (number || title.toLowerCase()).replace(/[^\w.-]+/g, "_");
+    doc.save(`${title}_${safeName}.pdf`);
   };
 
   return { layout, download };
