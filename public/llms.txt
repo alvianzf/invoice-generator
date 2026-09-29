@@ -1,0 +1,21 @@
+# Invoice Generator
+
+> Free, browser-based invoice generator for freelancers and contractors at https://invoice.alvianzf.id/. Fill in a form, see a live A4 preview that is identical to the PDF, and download the invoice. No account, no watermark, and invoice data never leaves the browser.
+
+## Key facts
+
+- Price: free, with no sign-up, no watermark and no invoice limit.
+- Privacy: form data is stored only in the browser's localStorage; PDFs are generated on the user's device; there are no analytics.
+- Preview: the on-screen preview and the PDF are drawn from one shared page layout with the same embedded fonts, so line breaks and page breaks match exactly.
+- Long content: descriptions and addresses wrap within their columns; long item tables continue onto new pages with repeated column headers; every page is numbered.
+- Currencies: IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY, each in its local number format.
+- Fields: invoice number, issue date, client company name, address, company ID and VAT number; sender name, address and VAT number; line items (description, quantity, unit price); bank name, account name, account number, SWIFT/BIC; contact email and phone.
+- Calculation: each line amount is quantity × unit price, and the total due is their sum. Tax is not calculated automatically; it can be added as a line item.
+- Output: A4 PDF (210 × 297 mm) with an embedded Unicode font (Inter), so accented and Central European characters render correctly.
+- Author: Alvian Zachry Faturrahman. Open source: https://github.com/alvianzf/invoice-generator
+
+## How to use
+
+1. Enter the client's details and your own.
+2. Add line items with quantity and unit price; totals update automatically.
+3. Check the live preview and click "Download PDF".

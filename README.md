@@ -19,9 +19,11 @@ Behold, the futuristic invoice generator in action:
 ## 🚀 Features  
 
 ✅ **Generate Professional Invoices** – Because clients don’t take crayon-written invoices seriously.  
-✅ **Auto-Sum & Formatting** – So you don’t have to embarrass yourself with bad math.  
-✅ **Download & Print** – For when you need to chase a client IRL.  
-✅ **Sleek UI** – Because ugly invoices = unpaid invoices.  
+✅ **Preview = PDF** – The live preview and the download come from one layout engine, same fonts, same line breaks, same page breaks.  
+✅ **Long Content Handled** – Descriptions and addresses wrap; long tables continue on the next page with repeated headers and page numbers.  
+✅ **Auto-Sum & Multi-Currency** – IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY, each in its local number format.  
+✅ **Speaks Slovak (and friends)** – Embedded Unicode font, so `č ľ ť ő ß` don’t turn into garbage.  
+✅ **Private** – Everything stays in your browser’s localStorage. No server, no analytics.  
 ✅ **100% Free** – Until I figure out how to charge you for it.  
 
 ---
@@ -45,6 +47,8 @@ Because real devs love fancy logos:
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)  
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)  
 
+Under the hood: **jsPDF** with embedded Inter + Instrument Serif fonts. `src/pdf/layout.ts` measures and wraps text with the real font metrics and paginates into drawing ops; `src/pdf/engine.ts` writes those ops to the PDF, and `src/components/PdfPreview.tsx` draws the very same ops as SVG.
+
 **Bonus:**  
 - No jQuery (You're welcome.)  
 - No AI-generated spaghetti code (I think.)  
@@ -63,6 +67,8 @@ npm install
 npm run dev
 ```
 Boom! You’re in business.
+
+Pushes to `main` deploy automatically to [invoice.alvianzf.id](https://invoice.alvianzf.id) via GitHub Actions.
 
 ---
 

@@ -1,68 +1,107 @@
-import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/Tabs";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { Eye, PencilLine } from "lucide-react";
 import InvoiceForm from "./components/InvoiceForm";
-import InvoicePreview from "./components/InvoicePreview";
-import { FileText, Eye, Github } from "lucide-react";
+import PdfPreview from "./components/PdfPreview";
+import { DownloadButton, DownloadState } from "./components/ui";
+import { useInvoice } from "./lib/invoice";
+import { Engine, loadEngine } from "./pdf/engine";
 
-function App() {
+type View = "edit" | "preview";
+
+export default function App() {
+  const [invoice, setInvoice] = useInvoice();
+  const [engine, setEngine] = useState<Engine | null>(null);
+  const [engineError, setEngineError] = useState(false);
+  const [view, setView] = useState<View>("edit");
+  const [downloadState, setDownloadState] = useState<DownloadState>("idle");
+
+  useEffect(() => {
+    loadEngine().then(setEngine, (err) => {
+      console.error(err);
+      setEngineError(true);
+    });
+  }, []);
+
+  // Typing stays responsive; the preview catches up a frame later.
+  const previewData = useDeferredValue(invoice);
+  const pages = useMemo(() => (engine ? engine.layout(previewData) : null), [engine, previewData]);
+
+  const download = useCallback(() => {
+    if (!engine) return;
+    setDownloadState("working");
+    // Let the spinner paint before the synchronous PDF build.
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        engine.download(invoice);
+        setDownloadState("done");
+        setTimeout(() => setDownloadState("idle"), 2200);
+      }, 30)
+    );
+  }, [engine, invoice]);
+
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="bg-gray-900 shadow-sm py-4 mb-6 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-2">
-          <FileText className="w-6 h-6 text-white" />
-          <h1 className="text-2xl font-bold text-white">Invoice Generator</h1>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 pb-12">
-        <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          {/* Use Tabs instead of manually managing state */}
-          <Tabs defaultValue="form">
-            <TabsList className="flex border-b border-gray-700">
-              <TabsTrigger
-                value="form"
-                className="flex items-center gap-2 px-6 py-3"
-              >
-                <FileText size={18} />
-                Create Invoice
-              </TabsTrigger>
-              <TabsTrigger
-                value="preview"
-                className="flex items-center gap-2 px-6 py-3"
-              >
-                <Eye size={18} />
-                Preview
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="form" className="p-4">
-              <InvoiceForm />
-            </TabsContent>
-            <TabsContent value="preview" className="p-4">
-              <InvoicePreview />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-
-      <footer className="bg-gray-900 border-t border-gray-800 py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4">
-          <p className="text-center text-gray-400 text-sm">
-            Invoice Generator App © {new Date().getFullYear()} —
-            <code> Alvian Zachry Faturrahman </code>
-            <a
-              href="https://github.com/alvianzf/invoice-generator"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline text-gray-300 hover:text-white flex items-center justify-center gap-1"
+    <div className="mx-auto max-w-[88rem] px-4 sm:px-6">
+      <div className="sticky top-[4.75rem] z-30 mb-5 flex justify-center lg:hidden">
+        <div className="glass-bar inline-flex rounded-full p-1 ring-1 ring-black/5" role="tablist" aria-label="Editor view">
+          {(
+            [
+              ["edit", "Edit", <PencilLine key="e" size={15} />],
+              ["preview", "Preview", <Eye key="p" size={15} />],
+            ] as const
+          ).map(([value, label, icon]) => (
+            <button
+              key={value}
+              role="tab"
+              aria-selected={view === value}
+              onClick={() => {
+                setView(value);
+                document.getElementById("app")?.scrollIntoView({ block: "start" });
+              }}
+              className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+                view === value ? "bg-gradient-to-b from-ruby-500 to-ruby-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_6px_14px_-6px_rgba(139,26,36,.8)]" : "text-ink-soft hover:text-ruby-700"
+              }`}
             >
-              <Github size={16} /> GitHub Repository
-            </a>
-          </p>
+              {icon}
+              {label}
+            </button>
+          ))}
         </div>
-      </footer>
+      </div>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:gap-8">
+        <div className={view === "preview" ? "hidden lg:block" : ""}>
+          <InvoiceForm invoice={invoice} setInvoice={setInvoice} onDownload={download} downloadState={downloadState} engineReady={!!engine} />
+        </div>
+
+        <aside
+          aria-label="Live PDF preview"
+          className={`glass rise p-3 sm:p-5 lg:sticky lg:top-24 ${view === "edit" ? "hidden lg:block" : ""}`}
+          style={{ ["--d" as string]: "0.15s" }}
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
+            <div>
+              <p className="eyebrow flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ruby-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-ruby-600" />
+                </span>
+                Live preview
+              </p>
+              <p className="mt-1 text-sm text-ink-mute">
+                A4 · {pages ? `${pages.length} ${pages.length === 1 ? "page" : "pages"}` : "preparing…"} · exactly what the PDF contains
+              </p>
+            </div>
+            <DownloadButton state={downloadState} disabled={!engine} onClick={download} />
+          </div>
+          <div className="rounded-2xl bg-gradient-to-b from-paper-deep/80 to-paper-deep/40 p-3 ring-1 ring-inset ring-black/[0.04] sm:p-6 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto">
+            {engineError ? (
+              <p className="p-6 text-center text-sm text-ruby-800">The PDF engine failed to load. Check your connection and reload the page.</p>
+            ) : (
+              <PdfPreview pages={pages} />
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
-
-export default App;

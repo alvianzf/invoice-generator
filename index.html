@@ -2,12 +2,264 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23990000'%3E%3Cpath d='M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-6v2h3v2H7v-2h3v-2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 13h16V5H4v11z'/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Freelancer Invoice Generator Free</title>
+    <title>Free Invoice Generator for Freelancers · Create PDF Invoices Online</title>
+    <meta name="description" content="Create professional PDF invoices for free. Live A4 preview that matches the PDF exactly, automatic totals, multi-currency, no sign-up, and your data never leaves your browser." />
+    <link rel="canonical" href="https://invoice.alvianzf.id/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="author" content="Alvian Zachry Faturrahman" />
+    <meta name="theme-color" content="#F7F4EF" />
+    <meta name="color-scheme" content="light" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Invoice Generator" />
+    <meta property="og:url" content="https://invoice.alvianzf.id/" />
+    <meta property="og:title" content="Free Invoice Generator for Freelancers" />
+    <meta property="og:description" content="Fill in the form, watch a pixel-exact A4 preview, download a clean PDF invoice. Free, no sign-up, private." />
+    <meta property="og:image" content="https://invoice.alvianzf.id/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Invoice Generator: a minimalist invoice with a deep red accent next to a live PDF preview" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free Invoice Generator for Freelancers" />
+    <meta name="twitter:description" content="Pixel-exact live preview, multi-currency, long content wraps and paginates. Free and private." />
+    <meta name="twitter:image" content="https://invoice.alvianzf.id/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://invoice.alvianzf.id/#app",
+            "name": "Invoice Generator",
+            "url": "https://invoice.alvianzf.id/",
+            "description": "A free, browser-based invoice generator for freelancers and contractors. It shows a live A4 preview that is drawn from the same layout as the PDF, totals line items automatically, supports eight currencies, and stores data only in the browser.",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Invoicing",
+            "operatingSystem": "Any (runs in a web browser)",
+            "browserRequirements": "Requires JavaScript",
+            "inLanguage": "en",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "featureList": [
+              "Live A4 preview identical to the downloaded PDF",
+              "Long descriptions and addresses wrap automatically",
+              "Tables continue across pages with repeated headers and page numbers",
+              "Automatic line totals (quantity × unit price) and grand total",
+              "Currencies: IDR, USD, EUR, GBP, SGD, AUD, MYR, JPY",
+              "Embedded Unicode font for accented and Central European characters",
+              "No account, no watermark, data saved only in the browser"
+            ],
+            "screenshot": "https://invoice.alvianzf.id/og-image.png",
+            "author": { "@id": "https://invoice.alvianzf.id/#author" },
+            "sameAs": ["https://github.com/alvianzf/invoice-generator"]
+          },
+          {
+            "@type": "Person",
+            "@id": "https://invoice.alvianzf.id/#author",
+            "name": "Alvian Zachry Faturrahman",
+            "url": "https://github.com/alvianzf"
+          },
+          {
+            "@type": "HowTo",
+            "name": "How to create a PDF invoice with Invoice Generator",
+            "totalTime": "PT2M",
+            "step": [
+              { "@type": "HowToStep", "position": 1, "name": "Add the parties", "text": "Enter who you are billing and your own details, including VAT or company IDs if needed." },
+              { "@type": "HowToStep", "position": 2, "name": "List your work", "text": "Add line items with a quantity and unit price. Amounts and the total due are calculated for you." },
+              { "@type": "HowToStep", "position": 3, "name": "Download the PDF", "text": "Check the live A4 preview, which matches the PDF exactly, then download it with one click." }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "Is this invoice generator really free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. There is no sign-up, no watermark, no invoice limit and no paid tier." } },
+              { "@type": "Question", "name": "Is my invoice data uploaded anywhere?", "acceptedAnswer": { "@type": "Answer", "text": "No. Everything you type is saved in your own browser's local storage so it is still there next time. The PDF is built on your device; nothing is sent to a server and there are no analytics." } },
+              { "@type": "Question", "name": "What happens when a description or address is very long?", "acceptedAnswer": { "@type": "Answer", "text": "Text wraps inside its column using the real font measurements. If the items run past the bottom of the page, the table continues on a new page with the column headers repeated, and every page is numbered." } },
+              { "@type": "Question", "name": "Does the preview match the downloaded PDF?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The preview and the PDF are drawn from the same page layout, with the same embedded fonts, so line breaks and page breaks are identical." } },
+              { "@type": "Question", "name": "Which currencies are supported?", "acceptedAnswer": { "@type": "Answer", "text": "Indonesian Rupiah (IDR), US Dollar (USD), Euro (EUR), British Pound (GBP), Singapore Dollar (SGD), Australian Dollar (AUD), Malaysian Ringgit (MYR) and Japanese Yen (JPY), each formatted in its local number style." } },
+              { "@type": "Question", "name": "Can I use it for VAT invoices?", "acceptedAnswer": { "@type": "Answer", "text": "It includes fields for both parties' VAT numbers and the client's company ID. It does not calculate tax for you; add tax as its own line item if your invoice needs it." } }
+            ]
+          }
+        ]
+      }
+    </script>
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div class="aura" aria-hidden="true"><span></span><span></span><span></span></div>
+
+    <header class="glass-bar sticky top-0 z-40">
+      <div class="mx-auto flex h-16 max-w-[88rem] items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/" class="flex items-center gap-2.5 text-ink" aria-label="Invoice Generator home">
+          <svg class="logo-draw h-9 w-9 text-ruby-700" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path pathLength="1" d="M9 4h11l5 5v17l-3 2-3-2-3 2-3-2-3 2-3-2V6a2 2 0 0 1 2-2Z" />
+            <path pathLength="1" d="M20 4v4a1 1 0 0 0 1 1h4" />
+            <path pathLength="1" d="M11 13h6" />
+            <path pathLength="1" d="M11 17h10" />
+            <path pathLength="1" d="M16 21h5" />
+            <circle pathLength="1" cx="12" cy="21" r="1" />
+          </svg>
+          <span class="leading-none">
+            <span class="font-display text-[1.6rem] tracking-tight">Invoice</span>
+            <span class="ml-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-ruby-700">Generator</span>
+          </span>
+        </a>
+        <nav class="flex items-center gap-1 text-sm font-medium text-ink-soft" aria-label="Main">
+          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 sm:inline-block" href="#how">How it works</a>
+          <a class="hidden rounded-full px-3 py-2 transition hover:text-ruby-700 sm:inline-block" href="#faq">FAQ</a>
+          <a class="btn-glass" href="https://github.com/alvianzf/invoice-generator" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            <span>GitHub</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="mx-auto max-w-[88rem] px-4 pb-10 pt-12 sm:px-6 sm:pt-16" aria-labelledby="title">
+        <div class="max-w-3xl">
+          <p class="eyebrow rise">Free · No sign-up · Private</p>
+          <h1 id="title" class="rise mt-4 font-display text-[2.9rem] leading-[0.98] tracking-tight text-ink sm:text-7xl" style="--d: 0.08s">
+            Invoices that look <em class="text-ruby-700">finished</em>, in the time it takes to type them.
+          </h1>
+          <p class="rise mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft" style="--d: 0.16s">
+            A free invoice generator for freelancers and contractors. Fill in the form, watch a live A4 preview that matches the PDF line for line, and download a clean invoice. Nothing is uploaded; your details stay in your browser.
+          </p>
+          <ul class="rise mt-7 flex flex-wrap gap-2 text-sm text-ink-soft" style="--d: 0.24s">
+            <li class="glass rounded-full px-3.5 py-1.5">Exact live PDF preview</li>
+            <li class="glass rounded-full px-3.5 py-1.5">Long text wraps &amp; paginates</li>
+            <li class="glass rounded-full px-3.5 py-1.5">8 currencies</li>
+            <li class="glass rounded-full px-3.5 py-1.5">No watermark</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="app" class="scroll-mt-20 pb-20" aria-label="Invoice editor">
+        <div id="root"></div>
+        <noscript>
+          <p class="mx-auto max-w-xl px-4 text-center text-ink-soft">The invoice editor needs JavaScript. Please enable it to create and download invoices.</p>
+        </noscript>
+      </section>
+
+      <section id="how" class="mx-auto max-w-[88rem] scroll-mt-20 px-4 py-20 sm:px-6" aria-labelledby="how-title">
+        <p class="eyebrow reveal">How it works</p>
+        <h2 id="how-title" class="reveal mt-3 max-w-2xl font-display text-5xl leading-none tracking-tight">Three steps from blank page to paid.</h2>
+        <ol class="mt-10 grid gap-5 md:grid-cols-3">
+          <li class="glass reveal p-7" style="--d: 0s">
+            <span class="font-display text-5xl text-ruby-700">01</span>
+            <h3 class="mt-4 text-lg font-semibold">Add the parties</h3>
+            <p class="mt-2 leading-relaxed text-ink-soft">Enter who you're billing and your own details, including VAT numbers and company IDs when you need them.</p>
+          </li>
+          <li class="glass reveal p-7" style="--d: 0.1s">
+            <span class="font-display text-5xl text-ruby-700">02</span>
+            <h3 class="mt-4 text-lg font-semibold">List your work</h3>
+            <p class="mt-2 leading-relaxed text-ink-soft">Add line items with a quantity and unit price. Every amount and the total due are calculated as you type.</p>
+          </li>
+          <li class="glass reveal p-7" style="--d: 0.2s">
+            <span class="font-display text-5xl text-ruby-700">03</span>
+            <h3 class="mt-4 text-lg font-semibold">Download the PDF</h3>
+            <p class="mt-2 leading-relaxed text-ink-soft">Check the live preview, which is exactly what the PDF contains, then download it in one click and send it off.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="mx-auto max-w-[88rem] px-4 py-10 sm:px-6" aria-labelledby="features-title">
+        <div class="glass reveal overflow-hidden p-8 sm:p-12">
+          <p class="eyebrow">Why it's different</p>
+          <h2 id="features-title" class="mt-3 max-w-2xl font-display text-5xl leading-none tracking-tight">Built like a document, not a web form.</h2>
+          <dl class="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt class="font-semibold">What you see is the PDF</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">The preview and the download are drawn from one page layout with the same embedded fonts, so every line break and page break matches.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">Long content, handled</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">Descriptions and addresses wrap within their columns. Long tables continue on new pages with repeated headers and page numbers.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">Private by design</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">Your details are saved only in your browser's local storage. The PDF is generated on your device, with no uploads and no analytics.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">Eight currencies</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">IDR, USD, EUR, GBP, SGD, AUD, MYR and JPY, each shown in its local number format.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">International names</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">An embedded Unicode font renders accented and Central European characters such as č, ľ, ő and ß correctly in the PDF.</dd>
+            </div>
+            <div>
+              <dt class="font-semibold">Open source</dt>
+              <dd class="mt-1.5 leading-relaxed text-ink-soft">Built with React, TypeScript and jsPDF. The code is public on <a class="font-medium text-ruby-700 underline decoration-ruby-200 underline-offset-4 hover:decoration-ruby-700" href="https://github.com/alvianzf/invoice-generator">GitHub</a>.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section id="faq" class="faq mx-auto max-w-4xl scroll-mt-20 px-4 py-20 sm:px-6" aria-labelledby="faq-title">
+        <p class="eyebrow reveal text-center">FAQ</p>
+        <h2 id="faq-title" class="reveal mt-3 text-center font-display text-5xl leading-none tracking-tight">Questions, answered.</h2>
+        <div class="mt-10 space-y-3">
+          <details class="glass reveal group p-0" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Is this invoice generator really free?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. There is no sign-up, no watermark, no invoice limit and no paid tier.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Is my invoice data uploaded anywhere?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">No. Everything you type is saved in your own browser's local storage so it is still there next time. The PDF is built on your device; nothing is sent to a server and there are no analytics.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">What happens when a description or address is very long?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Text wraps inside its column using the real font measurements. If the items run past the bottom of the page, the table continues on a new page with the column headers repeated, and every page is numbered.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Does the preview match the downloaded PDF?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Yes. The preview and the PDF are drawn from the same page layout, with the same embedded fonts, so line breaks and page breaks are identical.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Which currencies are supported?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">Indonesian Rupiah (IDR), US Dollar (USD), Euro (EUR), British Pound (GBP), Singapore Dollar (SGD), Australian Dollar (AUD), Malaysian Ringgit (MYR) and Japanese Yen (JPY), each formatted in its local number style.</p>
+          </details>
+          <details class="glass reveal p-0">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold">Can I use it for VAT invoices?<span class="chev text-2xl font-light text-ruby-700">+</span></summary>
+            <p class="answer px-6 pb-6 leading-relaxed text-ink-soft">It includes fields for both parties' VAT numbers and the client's company ID. It does not calculate tax for you; add tax as its own line item if your invoice needs it.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-ink/5">
+      <div class="mx-auto flex max-w-[88rem] flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-ink-mute sm:flex-row sm:px-6">
+        <p>Invoice Generator by <a class="font-medium text-ink-soft hover:text-ruby-700" href="https://github.com/alvianzf">Alvian Zachry Faturrahman</a></p>
+        <p><a class="hover:text-ruby-700" href="https://github.com/alvianzf/invoice-generator">Source on GitHub</a> · Your data never leaves your browser.</p>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var els = document.querySelectorAll(".reveal");
+        if (!("IntersectionObserver" in window)) {
+          els.forEach(function (el) { el.classList.add("is-visible"); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); }
+          });
+        }, { rootMargin: "0px 0px -8% 0px" });
+        els.forEach(function (el) { io.observe(el); });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

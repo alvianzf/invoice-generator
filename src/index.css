@@ -1,3 +1,263 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-paper text-ink antialiased;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-paper font-sans;
+    min-height: 100vh;
+  }
+  ::selection {
+    @apply bg-ruby-100 text-ruby-900;
+  }
+}
+
+@layer components {
+  /* Frosted, glossy panel: translucent fill, bright rim, soft specular top. */
+  .glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: 1.5rem;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(139, 26, 36, 0.05),
+      0 1px 2px rgba(28, 25, 23, 0.04),
+      0 24px 48px -28px rgba(94, 11, 20, 0.28);
+  }
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 60% at 0% 0%, rgba(255, 255, 255, 0.85), transparent 55%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 42%);
+  }
+
+  .glass-bar {
+    background: linear-gradient(180deg, rgba(250, 248, 245, 0.82), rgba(247, 244, 239, 0.6));
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    box-shadow: inset 0 -1px 0 rgba(28, 25, 23, 0.06), 0 10px 30px -20px rgba(94, 11, 20, 0.25);
+  }
+
+  /* Glossy ruby button with a light sweep on hover. */
+  .btn-ruby {
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold text-white;
+    background: linear-gradient(180deg, #b8303b 0%, #8b1a24 52%, #74101b 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -3px 8px rgba(40, 0, 6, 0.3),
+      0 12px 24px -12px rgba(139, 26, 36, 0.8),
+      0 2px 4px rgba(94, 11, 20, 0.2);
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, filter 0.2s;
+  }
+  .btn-ruby::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 50% 1px;
+    border-radius: 999px 999px 40% 40% / 999px 999px 12px 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06));
+    pointer-events: none;
+  }
+  .btn-ruby::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -60%;
+    width: 40%;
+    transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+    pointer-events: none;
+  }
+  .btn-ruby:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.1) brightness(1.05);
+  }
+  .btn-ruby:hover::after {
+    animation: shine 0.9s ease;
+  }
+  .btn-ruby:active {
+    transform: translateY(0) scale(0.98);
+  }
+  .btn-ruby:disabled {
+    @apply cursor-wait opacity-70;
+  }
+
+  .btn-glass {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium text-ink-soft;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));
+    border: 1px solid rgba(28, 25, 23, 0.08);
+    box-shadow: inset 0 1px 0 #fff, 0 4px 12px -6px rgba(28, 25, 23, 0.15);
+    transition: color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-glass:hover {
+    @apply text-ruby-700;
+    border-color: rgba(139, 26, 36, 0.25);
+    transform: translateY(-1px);
+  }
+  .btn-glass:active {
+    transform: scale(0.97);
+  }
+
+  .icon-btn {
+    @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-mute transition;
+  }
+  .icon-btn:hover {
+    @apply bg-ruby-50 text-ruby-700;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-mute;
+  }
+  .field {
+    @apply w-full rounded-xl px-3.5 py-2.5 text-[0.95rem] text-ink placeholder:text-ink-mute/60;
+    background: rgba(255, 255, 255, 0.66);
+    border: 1px solid rgba(28, 25, 23, 0.09);
+    box-shadow: inset 0 1px 2px rgba(28, 25, 23, 0.04);
+    transition: border-color 0.2s, box-shadow 0.25s, background 0.2s;
+  }
+  .field:hover {
+    border-color: rgba(28, 25, 23, 0.16);
+  }
+  .field:focus {
+    outline: none;
+    background: #fff;
+    border-color: rgba(139, 26, 36, 0.45);
+    box-shadow: 0 0 0 4px rgba(176, 44, 55, 0.12), inset 0 1px 2px rgba(28, 25, 23, 0.03);
+  }
+  textarea.field {
+    resize: none;
+    overflow: hidden;
+    min-height: 2.9rem;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-ruby-700;
+  }
+}
+
+/* Drifting colour behind the glass. */
+.aura {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aura span {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.aura span:nth-child(1) {
+  width: 46vw; height: 46vw; left: -12vw; top: -14vw;
+  background: radial-gradient(circle, #e7a3a8, transparent 65%);
+  animation: drift-a 26s ease-in-out infinite alternate;
+}
+.aura span:nth-child(2) {
+  width: 40vw; height: 40vw; right: -10vw; top: 18vh;
+  background: radial-gradient(circle, #c4545d, transparent 62%);
+  opacity: 0.32;
+  animation: drift-b 32s ease-in-out infinite alternate;
+}
+.aura span:nth-child(3) {
+  width: 50vw; height: 50vw; left: 20vw; bottom: -30vw;
+  background: radial-gradient(circle, #f0d2c4, transparent 60%);
+  animation: drift-c 38s ease-in-out infinite alternate;
+}
+.aura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Logo strokes draw themselves in. */
+.logo-draw path,
+.logo-draw circle {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.logo-draw :nth-child(2) { animation-delay: 0.35s; }
+.logo-draw :nth-child(3) { animation-delay: 0.55s; }
+.logo-draw :nth-child(4) { animation-delay: 0.7s; }
+.logo-draw :nth-child(5) { animation-delay: 0.85s; }
+.logo-draw :nth-child(6) { animation-delay: 1s; }
+
+.rise {
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+.pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.fade-in {
+  animation: fade-in 0.5s ease both;
+}
+
+/* Scroll reveal; only hidden once JS has confirmed it can reveal it again. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--d, 0s);
+}
+.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary .chev { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.faq details[open] summary .chev { transform: rotate(45deg); }
+.faq details[open] .answer { animation: fade-in 0.4s ease both; }
+
+.pdf-text {
+  font-kerning: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "kern" 0, "liga" 0, "calt" 0;
+  white-space: pre;
+}
+
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes shine { to { left: 130%; } }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes drift-a { to { transform: translate(14vw, 10vh) scale(1.15); } }
+@keyframes drift-b { to { transform: translate(-12vw, 16vh) scale(0.9); } }
+@keyframes drift-c { to { transform: translate(-10vw, -12vh) scale(1.1); } }
+@keyframes shine-bar { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .js .reveal { opacity: 1; transform: none; }
+}
