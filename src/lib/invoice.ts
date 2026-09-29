@@ -161,12 +161,10 @@ export function computeTotals(invoice: InvoiceData): Totals {
 export const isBlankItem = (item: InvoiceItem) =>
   !item.description.trim() && (item.kind === "heading" || (!item.quantity.trim() && !item.unit.trim() && !item.price.trim()));
 
+const dateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
 export function formatInvoiceDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(y, m - 1, d));
+  return dateFormat.format(new Date(y, m - 1, d));
 }

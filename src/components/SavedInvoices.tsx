@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { Archive, FolderOpen, PencilLine, Save, Trash2, X } from "lucide-react";
 import { InvoiceData } from "../types";
 import { computeTotals, formatInvoiceDate } from "../lib/invoice";
@@ -37,6 +37,7 @@ export default function SavedInvoices({
     return () => window.clearTimeout(timer.current);
   }, [notice]);
 
+  const totals = useMemo(() => new Map(saved.map((s) => [s.id, computeTotals(s.data)])), [saved]);
   const number = invoice.invoiceNumber.trim() || `this ${doc.noun}`;
   const current = findFor(invoice);
   const upToDate = current ? isSame(current.data, invoice) : false;
@@ -145,7 +146,7 @@ export default function SavedInvoices({
       ) : (
         <ul className="divide-y divide-ink/[0.06] overflow-hidden rounded-2xl bg-white/55 ring-1 ring-black/[0.05]">
           {saved.map((entry) => {
-            const totals = computeTotals(entry.data);
+            const total = totals.get(entry.id)?.total ?? 0;
             const editing = entry.id === current?.id;
             return (
               <li key={entry.id} className={`pop-in flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/70 ${editing ? "bg-ruby-50/50" : ""}`}>
@@ -158,8 +159,8 @@ export default function SavedInvoices({
                     {formatInvoiceDate(entry.data.invoiceDate)} · {entry.data.billedToCompanyName || "No client name"}
                   </p>
                 </div>
-                <p className={`whitespace-nowrap text-sm font-semibold tabular-nums ${totals.total < 0 ? "text-negative" : "text-ink"}`}>
-                  {formatMoney(totals.total, getCurrency(entry.data.currency))}
+                <p className={`whitespace-nowrap text-sm font-semibold tabular-nums ${total < 0 ? "text-negative" : "text-ink"}`}>
+                  {formatMoney(total, getCurrency(entry.data.currency))}
                 </p>
                 <div className="flex shrink-0">
                   <button type="button" className="icon-btn" onClick={() => open(entry)} aria-label={`Open ${entry.data.invoiceNumber}`} title="Open">

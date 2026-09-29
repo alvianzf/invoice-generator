@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, lazy, ReactNode, SetStateAction, Suspense, useId, useState } from "react";
+import { ChangeEvent, Dispatch, lazy, memo, ReactNode, SetStateAction, Suspense, useCallback, useId, useRef, useState } from "react";
 import {
   ArrowRightLeft,
   Building2,
@@ -65,16 +65,22 @@ export default function InvoiceForm({ doc, invoice, setInvoice, onDownload, down
       setInvoice((prev) => ({ ...prev, [name]: e.target.value })),
   });
 
-  const updateItem = (id: string, field: keyof InvoiceItem, value: string) =>
-    setInvoice((prev) => ({
-      ...prev,
-      items: prev.items.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
-    }));
+  // Stable callbacks let unchanged rows skip re-rendering while another row is edited.
+  const updateItem = useCallback(
+    (id: string, field: keyof InvoiceItem, value: string) =>
+      setInvoice((prev) => ({
+        ...prev,
+        items: prev.items.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      })),
+    [setInvoice]
+  );
 
   const addRow = (kind: InvoiceItem["kind"]) => setInvoice((prev) => ({ ...prev, items: [...prev.items, emptyItem(kind)] }));
 
-  const removeItem = (id: string) => {
-    if (invoice.items.length <= 1) {
+  const itemCount = useRef(invoice.items.length);
+  itemCount.current = invoice.items.length;
+  const removeItem = useCallback((id: string) => {
+    if (itemCount.current <= 1) {
       setInvoice((prev) => ({ ...prev, items: [emptyItem()] }));
       return;
     }
@@ -87,7 +93,7 @@ export default function InvoiceForm({ doc, invoice, setInvoice, onDownload, down
         return next;
       });
     }, 260);
-  };
+  }, [setInvoice]);
 
   const reset = async () => {
     const ok = await confirm({
@@ -472,9 +478,9 @@ function UnitToggle<T extends string>({ value, options, onChange }: { value: T; 
 }
 
 const rowClass = (leaving: boolean) =>
-  `pop-in group align-top transition-all duration-300 ease-out [&>td]:border-b [&>td]:border-ink/[0.06] ${leaving ? "pointer-events-none -translate-x-3 opacity-0" : ""}`;
+  `pop-in group align-top transition-[opacity,transform,background-color] duration-300 ease-out [&>td]:border-b [&>td]:border-ink/[0.06] ${leaving ? "pointer-events-none -translate-x-3 opacity-0" : ""}`;
 
-function HeadingRow({
+const HeadingRow = memo(function HeadingRow({
   item,
   columns,
   leaving,
@@ -508,9 +514,9 @@ function HeadingRow({
       </td>
     </tr>
   );
-}
+});
 
-function ItemRow({
+const ItemRow = memo(function ItemRow({
   item,
   number,
   showUnit,
@@ -576,4 +582,4 @@ function ItemRow({
       </td>
     </tr>
   );
-}
+});

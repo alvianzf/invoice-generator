@@ -23,34 +23,66 @@ export function Field({ label, className = "", ...props }: InputHTMLAttributes<H
   );
 }
 
+// Browsers with CSS `field-sizing` grow textareas natively, at no JS or layout cost.
+const nativeAutosize = typeof CSS !== "undefined" && CSS.supports?.("field-sizing", "content");
+
+// Fallback: size every pending textarea in one frame (all writes, one layout, all writes)
+// instead of forcing a separate layout for each field.
+const pending = new Set<HTMLTextAreaElement>();
+let scheduled = false;
+function fitSoon(el: HTMLTextAreaElement) {
+  pending.add(el);
+  if (scheduled) return;
+  scheduled = true;
+  requestAnimationFrame(() => {
+    scheduled = false;
+    const els = [...pending].filter((e) => e.isConnected);
+    pending.clear();
+    els.forEach((e) => (e.style.height = "auto"));
+    const heights = els.map((e) => e.scrollHeight);
+    els.forEach((e, i) => (e.style.height = `${heights[i] + 2}px`));
+  });
+}
+
 /** Textarea that grows with its content, so long addresses and descriptions stay readable. */
 export function AutoTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const fit = () => {
+  const mounted = useRef(false);
+
+  useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (nativeAutosize || !el) return;
+    if (!mounted.current) {
+      mounted.current = true;
+      fitSoon(el);
+      return;
+    }
+    // The field being typed in is sized immediately so new lines never clip.
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight + 2}px`;
-  };
-  useLayoutEffect(fit, [props.value]);
+  }, [props.value]);
+
   // Wrapping changes when the web font arrives or the column width changes.
   useEffect(() => {
+    const el = ref.current;
+    if (nativeAutosize || !el) return;
     let width = 0;
     const observer = new ResizeObserver(([entry]) => {
       if (entry.contentRect.width !== width) {
         width = entry.contentRect.width;
-        fit();
+        fitSoon(el);
       }
     });
-    if (ref.current) observer.observe(ref.current);
-    document.fonts?.ready.then(fit);
-    document.fonts?.addEventListener("loadingdone", fit);
+    observer.observe(el);
+    const onFonts = () => fitSoon(el);
+    document.fonts?.addEventListener("loadingdone", onFonts);
     return () => {
       observer.disconnect();
-      document.fonts?.removeEventListener("loadingdone", fit);
+      document.fonts?.removeEventListener("loadingdone", onFonts);
     };
   }, []);
-  return <textarea ref={ref} rows={1} {...props} className={props.className || "field"} />;
+
+  return <textarea ref={ref} rows={1} {...props} className={`${props.className || "field"}${nativeAutosize ? " autosize" : ""}`} />;
 }
 
 export function TextareaField({ label, className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {

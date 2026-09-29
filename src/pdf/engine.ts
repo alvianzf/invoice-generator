@@ -4,17 +4,22 @@ import interSemiBoldUrl from "../assets/fonts/Inter-SemiBold.ttf?url";
 import serifUrl from "../assets/fonts/InstrumentSerif-Regular.ttf?url";
 import interItalicUrl from "../assets/fonts/Inter-Italic.ttf?url";
 import interSemiBoldItalicUrl from "../assets/fonts/Inter-SemiBoldItalic.ttf?url";
+import interRegularGz from "../assets/fonts/Inter-Regular.ttf.gz?url";
+import interSemiBoldGz from "../assets/fonts/Inter-SemiBold.ttf.gz?url";
+import serifGz from "../assets/fonts/InstrumentSerif-Regular.ttf.gz?url";
+import interItalicGz from "../assets/fonts/Inter-Italic.ttf.gz?url";
+import interSemiBoldItalicGz from "../assets/fonts/Inter-SemiBoldItalic.ttf.gz?url";
 import { InvoiceData } from "../types";
 import { FontKey, layoutInvoice, Measure, Page } from "./layout";
 import { DocKind, DOCS } from "../lib/docs";
 
 /** How each font key maps to jsPDF names and to the preview's CSS family. */
-export const FONTS: Record<FontKey, { url: string; file: string; pdfFamily: string; pdfStyle: string; cssFamily: string }> = {
-  regular: { url: interRegularUrl, file: "Inter-Regular.ttf", pdfFamily: "Inter", pdfStyle: "normal", cssFamily: "PdfInterRegular" },
-  bold: { url: interSemiBoldUrl, file: "Inter-SemiBold.ttf", pdfFamily: "Inter", pdfStyle: "bold", cssFamily: "PdfInterSemiBold" },
-  italic: { url: interItalicUrl, file: "Inter-Italic.ttf", pdfFamily: "Inter", pdfStyle: "italic", cssFamily: "PdfInterItalic" },
-  boldItalic: { url: interSemiBoldItalicUrl, file: "Inter-SemiBoldItalic.ttf", pdfFamily: "Inter", pdfStyle: "bolditalic", cssFamily: "PdfInterSemiBoldItalic" },
-  serif: { url: serifUrl, file: "InstrumentSerif-Regular.ttf", pdfFamily: "InstrumentSerif", pdfStyle: "normal", cssFamily: "PdfSerif" },
+export const FONTS: Record<FontKey, { url: string; gz: string; file: string; pdfFamily: string; pdfStyle: string; cssFamily: string }> = {
+  regular: { url: interRegularUrl, gz: interRegularGz, file: "Inter-Regular.ttf", pdfFamily: "Inter", pdfStyle: "normal", cssFamily: "PdfInterRegular" },
+  bold: { url: interSemiBoldUrl, gz: interSemiBoldGz, file: "Inter-SemiBold.ttf", pdfFamily: "Inter", pdfStyle: "bold", cssFamily: "PdfInterSemiBold" },
+  italic: { url: interItalicUrl, gz: interItalicGz, file: "Inter-Italic.ttf", pdfFamily: "Inter", pdfStyle: "italic", cssFamily: "PdfInterItalic" },
+  boldItalic: { url: interSemiBoldItalicUrl, gz: interSemiBoldItalicGz, file: "Inter-SemiBoldItalic.ttf", pdfFamily: "Inter", pdfStyle: "bolditalic", cssFamily: "PdfInterSemiBoldItalic" },
+  serif: { url: serifUrl, gz: serifGz, file: "InstrumentSerif-Regular.ttf", pdfFamily: "InstrumentSerif", pdfStyle: "normal", cssFamily: "PdfSerif" },
 };
 
 export interface Engine {
@@ -31,6 +36,21 @@ function toBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+/**
+ * Fonts ship pre-gzipped (about 43% smaller) and are unpacked in the browser,
+ * so the saving doesn't depend on the server or CDN compressing .ttf files.
+ * Browsers without DecompressionStream fetch the plain TTF instead.
+ */
+async function fetchFont(key: FontKey): Promise<ArrayBuffer> {
+  const { url, gz } = FONTS[key];
+  if (typeof DecompressionStream === "undefined") return (await fetch(url)).arrayBuffer();
+  const data = await (await fetch(gz)).arrayBuffer();
+  const bytes = new Uint8Array(data, 0, 2);
+  // If something upstream already decoded it, it is a plain TTF (no gzip magic bytes).
+  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return data;
+  return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+}
+
 let enginePromise: Promise<Engine> | null = null;
 
 export function loadEngine(): Promise<Engine> {
@@ -45,7 +65,7 @@ async function createEngine(): Promise<Engine> {
   const keys = Object.keys(FONTS) as FontKey[];
   const [{ jsPDF }, buffers] = await Promise.all([
     import("jspdf"),
-    Promise.all(keys.map((k) => fetch(FONTS[k].url).then((r) => r.arrayBuffer()))),
+    Promise.all(keys.map(fetchFont)),
   ]);
 
   const base64 = keys.map((_, i) => toBase64(buffers[i]));

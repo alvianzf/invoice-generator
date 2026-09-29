@@ -68,6 +68,13 @@ export default function App() {
 
   useEffect(() => setHead(kind), [kind]);
 
+  // Warm the quote editor chunk while idle so switching to Quotes is instant.
+  useEffect(() => {
+    const warm = () => void import("./components/RichTextEditor");
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
+    idle(warm);
+  }, []);
+
   useEffect(() => {
     if (!toast) return;
     const t = window.setTimeout(() => setToast(null), 3800);

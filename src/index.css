@@ -22,15 +22,19 @@
 }
 
 @layer components {
-  /* Frosted, glossy panel: translucent fill, bright rim, soft specular top. */
+  /*
+   * Frosted, glossy panel: translucent fill, bright rim, soft specular top.
+   * No backdrop-filter here: what sits behind the cards is already a soft blur,
+   * and re-blurring large panels on every repaint made typing and scrolling slow.
+   * Real backdrop blur is kept for surfaces with content moving behind them
+   * (the sticky header, the modal).
+   */
   .glass {
     position: relative;
     isolation: isolate;
     border-radius: 1.5rem;
-    background: linear-gradient(150deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.58));
     border: 1px solid rgba(255, 255, 255, 0.8);
-    -webkit-backdrop-filter: blur(22px) saturate(170%);
-    backdrop-filter: blur(22px) saturate(170%);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.95),
       inset 0 -1px 0 rgba(139, 26, 36, 0.05),
@@ -152,6 +156,9 @@
     overflow: hidden;
     min-height: 2.9rem;
   }
+  textarea.autosize {
+    field-sizing: content;
+  }
 
   /* Spreadsheet-style cell: quiet until hovered or focused. */
   .cell-input {
@@ -181,7 +188,11 @@
   }
 }
 
-/* Drifting colour behind the glass. */
+/*
+ * Drifting colour behind the glass. The softness comes from long gradient
+ * falloffs rather than filter: blur(), so moving the blobs only re-composites
+ * already-rasterized layers instead of re-blurring them on the GPU every frame.
+ */
 .aura {
   position: fixed;
   inset: 0;
@@ -192,24 +203,23 @@
 .aura span {
   position: absolute;
   border-radius: 999px;
-  filter: blur(70px);
-  opacity: 0.55;
+  opacity: 0.6;
   will-change: transform;
 }
 .aura span:nth-child(1) {
-  width: 46vw; height: 46vw; left: -12vw; top: -14vw;
-  background: radial-gradient(circle, #e7a3a8, transparent 65%);
+  width: 64vw; height: 64vw; left: -22vw; top: -24vw;
+  background: radial-gradient(circle closest-side, rgba(231, 163, 168, 0.95), rgba(231, 163, 168, 0.45) 45%, rgba(231, 163, 168, 0) 100%);
   animation: drift-a 26s ease-in-out infinite alternate;
 }
 .aura span:nth-child(2) {
-  width: 40vw; height: 40vw; right: -10vw; top: 18vh;
-  background: radial-gradient(circle, #c4545d, transparent 62%);
-  opacity: 0.32;
+  width: 58vw; height: 58vw; right: -20vw; top: 8vh;
+  background: radial-gradient(circle closest-side, rgba(196, 84, 93, 0.7), rgba(196, 84, 93, 0.28) 45%, rgba(196, 84, 93, 0) 100%);
+  opacity: 0.42;
   animation: drift-b 32s ease-in-out infinite alternate;
 }
 .aura span:nth-child(3) {
-  width: 50vw; height: 50vw; left: 20vw; bottom: -30vw;
-  background: radial-gradient(circle, #f0d2c4, transparent 60%);
+  width: 70vw; height: 70vw; left: 10vw; bottom: -42vw;
+  background: radial-gradient(circle closest-side, rgba(240, 210, 196, 0.95), rgba(240, 210, 196, 0.4) 45%, rgba(240, 210, 196, 0) 100%);
   animation: drift-c 38s ease-in-out infinite alternate;
 }
 .aura::after {
@@ -332,8 +342,8 @@
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes shine { to { left: 130%; } }
 @keyframes rise {
-  from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
